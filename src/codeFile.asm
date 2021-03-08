@@ -4,8 +4,11 @@ N2: CONST -48
 N4: SPACE
 SECTION TEXT
 ADD N2
-ROT: INPUT N1
-COPY N1,N4  ;comentario       qualquer
+ROT:
+
+
+INPUT N1
+COPY N1,N4 ;comentario       qualquer
 COPY N2,N3
 COPY N3,N3
 OUTPUT N3
