@@ -4,15 +4,32 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <map>
 #include "./header/assembler.h"
+#include "./header/symbolTable.h"
 
 using std::cout;
 using std::endl;
 using std::ifstream;
 using std::string;
 using std::vector;
-int lineCounter = 0;
+using std::map;
+
+
+enum SectionState {
+    sectionData,
+    sectionText
+};
+enum ProgramState {
+    firstPassage ,
+    secondPassage
+};
+ProgramState programState= firstPassage;
+SectionState sectionState = sectionData;
+
 vector<vector<string>> currentProgram;
+
+int lineCounter = 0, acumulador = 0; 
 
 int isInvalidChar(char character, int indexCounter) {
     // Checks if symbol starts with number
@@ -39,21 +56,59 @@ int isInvalidChar(char character, int indexCounter) {
     
     return 0;
 }
+void defineLabel(string word){
+    // Label auxLabel(word);
 
-int tokenizeLine(string readLine){
+}
+
+void whichCodeSection(string readLine){
+    if(readLine == "SECTION DATA")sectionState = sectionData;
+    else if(readLine == "SECTION TEXT") sectionState = sectionText;
+}
+
+// Estas funções de trim não são minhas e estão disponíveis em:
+// https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+static inline void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+// trim from both ends (in place)
+static inline void trim(std::string &s) {
+    ltrim(s);
+    rtrim(s);
+}
+// ======================================================================================
+
+int scanner(string readLine){
     lineCounter++;
     vector<string> currentPhrase;
     string currentWord;
+    int indexCounter = 0;
+
     // Makes case insensitive
     for(auto &i:readLine) i = toupper(i);
-    
-    int indexCounter = 0;
+
+    whichCodeSection(readLine);
+
+    if(sectionState == sectionData){
+
+    }
     for(auto &i :readLine){
-        
+        // readLine.erase(std::remove(readLine.begin(), readLine.end(), '\n'), readLine.end());
         // Checks if endline
         if(indexCounter == readLine.length()-1){
             currentWord+=i;
+            trim(currentWord);
             currentPhrase.push_back(currentWord);
+              
             currentWord.clear();
         
         }
@@ -65,6 +120,7 @@ int tokenizeLine(string readLine){
 
             return 1;
         }
+
         // Checks if separate words
         else if(i==':'|| i == ' '){
             if(currentWord.length() > 0){
@@ -89,13 +145,14 @@ int tokenizeLine(string readLine){
     // cout <<"=========================" <<endl;
     return 1;
 }
+
 void printProgram(){
     for(auto &i : currentProgram){
         cout << "Linha: ";
         for(auto j : i){
-                cout  <<  j ;
+                cout  <<"|" << j <<  "|";
         }
-        cout << endl <<"=============<" <<endl;
+        cout << endl <<"========================" <<endl;
     }
     cout << "Total Lines:" << lineCounter <<endl;
 
@@ -104,12 +161,12 @@ void printProgram(){
 int analyzeCode(ifstream &inFile){
     while(!inFile.eof()){
         string readLine;
-        getline(inFile,readLine);
-        if(!tokenizeLine(readLine)){
+        getline(inFile,readLine, '\n');
+        if(!scanner(readLine)){
             cout << "Program ended with error.\n";
             return 0;
         }
-
     }
+    printProgram();
     return lineCounter;
 }

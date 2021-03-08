@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "./header/assembler.h"
-#include "./header/symbolTable.h"
 using std::cout;
 using std::endl;
 using std::ifstream;
@@ -13,7 +12,6 @@ using std::string;
 
 
 int main(int argc, char **argv) {
-
     string fileName;
     //Check initial input arguments 
     if(argc >= 2){

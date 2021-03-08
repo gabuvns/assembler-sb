@@ -1,13 +1,27 @@
-Palavra: 
-=========================
-Palavra: 
-=========================
-Palavra: 
-=========================
-Palavra: 
-=========================
-Palavra: 
-=========================
-Palavra: 
-=========================
-Program ended with error.
+Linha: SECTION  DATA 
+=============<
+Linha: N1  SPACE 
+=============<
+Linha: N2  CONST  -48 
+=============<
+Linha: N4  SPACE 
+=============<
+Linha: SECTION  TEXT 
+=============<
+Linha: ADD  N2 
+=============<
+Linha: ROT  INPUT  N1 
+=============<
+Linha: COPY 
+=============<
+Linha: N1,N4   
+=============<
+Linha: COPY  N2,N3 
+=============<
+Linha: COPY  N3,N3 
+=============<
+Linha: OUTPUT  N3 
+=============<
+Linha: STOP 
+=============<
+Total Lines:13
