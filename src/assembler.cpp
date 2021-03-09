@@ -78,14 +78,11 @@ int isInvalidChar(char character, int indexCounter) {
     
     return 0;
 }
-void defineLabel(string word){
-    // Label auxLabel(word);
 
-}
-
-void whichCodeSection(string readLine){
-    if(readLine == "SECTION DATA")sectionState = sectionData;
-    else if(readLine == "SECTION TEXT") sectionState = sectionText;
+void whichCodeSection(vector<string> readLine){
+    if(readLine.front() == "SECTION"){
+        sectionState = readLine.back() == "DATA" ? sectionData : sectionText;
+    }
 }
 
 vector<string> scanner(string readLine){
@@ -96,8 +93,6 @@ vector<string> scanner(string readLine){
 
     // Makes case insensitive
     for(auto &i:readLine) i = toupper(i);
-
-    whichCodeSection(readLine);
 
     for(auto &i :readLine){
         // Checks if last element from line
@@ -120,18 +115,14 @@ vector<string> scanner(string readLine){
         }
 
         else if(i==':'){
-            
             if(!currentWord.empty()){
                 currentWord+=i;
                 currentPhrase.push_back(currentWord);
             }
             currentWord.clear();
-        
-            
         }
         // Checks if separate words
         else if(i == ' '){
-           
             if(!currentWord.empty()){
                 currentPhrase.push_back(currentWord);
             }
@@ -148,43 +139,46 @@ vector<string> scanner(string readLine){
         
         indexCounter++;
     }
+
     return currentPhrase;
 
     // for(auto &i : currentPhrase) cout << "Palavra: " <<i << endl;
     // cout <<"=========================" <<endl;
 }
 
-int searchLabelTable(){
-    bool found = false;
-    if(found){
-        // error
-        return 1;
-    }
-    else{
-        // Found nothing and can add to table
-        return 0;
-    }
-}
 Label parseLabel(vector<string> currentPhrase){
-    string name = currentPhrase[0];
-    LabelType labelType = currentPhrase[1] =="SPACE" ? typeSpace : typeConst;
-    if(labelType == typeConst){
-        int value = stoi(currentPhrase[2]);
+    string name = currentPhrase.at(0);
+    // if(name.back() != ':') throw 2;
+    LabelType labelType = currentPhrase.at(1) =="SPACE" ? typeSpace : typeConst;
+    if(labelType == 0){
+        int value = stoi(currentPhrase.at(2));
+        cout <<"value:" << value <<endl;
         Label auxLabel(name, labelType, value);
         return auxLabel;
-
     }
-    else if(labelType == typeSpace){
+    else if(labelType == 1){
         Label auxLabel(name, labelType, 0);
         return auxLabel;
     }
 
 }
+
+int searchLabelTable(){
+    bool found = false;
+    if(found){
+        // error
+        return 0;
+    }
+    else{
+        // Found nothing and can add to table
+        return 1;
+    }
+}
 void parser(vector<string> currentPhrase){
     if(sectionState == sectionData){
-        // searchLabelTable(){
-
-        // }
+        if(searchLabelTable() && currentPhrase.front() !="SECTION"){
+            parseLabel(currentPhrase);
+        }   
         
     }
 
@@ -208,6 +202,8 @@ int analyzeCode(ifstream &inFile){
         try{    
             vector<string> tokenizedLine = scanner(readLine);
             if(!tokenizedLine.empty()) currentProgram.push_back(tokenizedLine);
+            whichCodeSection(tokenizedLine);
+
             parser(tokenizedLine);
             if(programError){
                 throw 0;
