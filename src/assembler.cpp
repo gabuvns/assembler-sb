@@ -24,13 +24,14 @@ enum ProgramState {
     firstPassage ,
     secondPassage
 };
+
 ProgramState programState= firstPassage;
-SectionState sectionState = sectionData;
+SectionState sectionState = sectionText;
+CodeTable codeTable;
 bool programError = false;
 vector<string> errorList;
 vector<vector<string>> currentProgram;
-
-int lineCounter = 0, acumulador = 0; 
+int lineCounter = 0, acumulador = 0, contadorPosicao = 0; 
 
 
 // Estas funções de trim não são minhas e estão disponíveis em:
@@ -55,6 +56,12 @@ static inline void trim(std::string &s) {
 // ======================================================================================
 
 
+void printStringVector(vector<string> vetor){
+    for(auto i : vetor) cout << i <<" ";
+    cout << endl;
+}
+
+
 int isInvalidChar(char character, int indexCounter) {
     // Checks if symbol starts with number
     // Throw codes: 0->invalid char, 1->
@@ -67,8 +74,7 @@ int isInvalidChar(char character, int indexCounter) {
         else if(!((int) character >= 65 && (int)character <= 90) && !((int)character >=48 && (int)character <=57)) {
             throw(2);
         }
-    }
-         
+    } 
     
     catch(int errorCode){
         cout << "Scanner/Lexical error.\n" << errorCode <<endl;
@@ -110,7 +116,7 @@ vector<string> scanner(string readLine){
             if(!currentWord.empty()){
                 currentPhrase.push_back(currentWord);
             }
-            currentWord.clear();
+            currentWord.clear(); 
             return currentPhrase;
         }
 
@@ -153,33 +159,82 @@ Label parseLabel(vector<string> currentPhrase){
     if(labelType == 0){
         int value = stoi(currentPhrase.at(2));
         cout <<"value:" << value <<endl;
-        Label auxLabel(name, labelType, value);
+        Label auxLabel(name, labelType, value, lineCounter);
         return auxLabel;
     }
     else if(labelType == 1){
-        Label auxLabel(name, labelType, 0);
+        Label auxLabel(name, labelType, 0, lineCounter);
         return auxLabel;
     }
 
 }
 
-int searchLabelTable(){
+int searchLabelTable(vector<string> currentPhrase ){
     bool found = false;
+    if(currentPhrase.at(0) == "SECTION") return 0;
+    if(currentPhrase.at(0).back() == ':'){
+        currentPhrase.at(0).pop_back();
+    }
+    for(auto i : codeTable.labelTable){
+        if(i.name == currentPhrase.at(0)){
+            cout<< "Semantical/Parser Error\n";
+            printStringVector(currentPhrase);
+            cout << "Label declared previously at line: " << i.line <<  " Current Line: " << lineCounter <<endl;
+            programError = 1;
+            found = true;
+        } 
+    }
     if(found){
         // error
         return 0;
     }
     else{
+
+        if(currentPhrase.size() == 1){
+            cout << "WARNING: ";
+            cout <<"Not enough arguments at label: "<<currentPhrase.at(0)<< " Line:" << lineCounter << endl;
+            cout << "Assuming desired Label is of type SPACE\n";
+            codeTable.labelTable.push_back(Label(currentPhrase.at(0),typeSpace, 0, lineCounter));
+            cout << "END WARNING\n";
+        }
+       
+        else if(currentPhrase.size() == 3 && currentPhrase.at(1) =="CONST"){    
+            codeTable.labelTable.push_back(Label(currentPhrase.at(0),  typeConst, stoi(currentPhrase.at(2)), lineCounter));
+
+        }
+        else if(currentPhrase.size() ==2 && currentPhrase.at(1) =="SPACE"){
+            codeTable.labelTable.push_back(Label(currentPhrase.at(0), typeSpace, 0, lineCounter));
+        }
+        else{
+            cout<< "Syntactical Error\n";
+            cout <<"Unknown type of label at line: " << lineCounter << endl;
+            programError = 1;
+            return 0;
+        }
         // Found nothing and can add to table
         return 1;
     }
 }
+
+int classifyLine(vector<string> vetor){
+    auto instructionName = InstructionsTable.find(vetor.front());
+    if(instructionName != InstructionsTable.end()){
+
+        // cout <<"Achei: " << instructionName->first <<endl;
+    }
+    return 1;
+}
+
 void parser(vector<string> currentPhrase){
     if(sectionState == sectionData){
-        if(searchLabelTable() && currentPhrase.front() !="SECTION"){
-            parseLabel(currentPhrase);
+        if(searchLabelTable(currentPhrase) && currentPhrase.front() !="SECTION"){
+            // parseLabel(currentPhrase);
         }   
-        
+    }
+    else if (sectionState == sectionText){
+      if(classifyLine(currentPhrase)){
+
+      }
     }
 
 }
@@ -215,6 +270,6 @@ int analyzeCode(ifstream &inFile){
         }
         
     }
-    printProgram();
+    // printProgram();
     return lineCounter;
 }

@@ -27,8 +27,7 @@ int main(int argc, char **argv) {
     if(!inFile.is_open()){
         cout << "Error opening file." << endl;
         cout <<"Tried to open: '" << fileName << "'." << endl;
-    }    
-        
+    }       
     
     analyzeCode(inFile);
 
