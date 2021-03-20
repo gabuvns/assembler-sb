@@ -31,7 +31,7 @@ CodeTable codeTable;
 bool programError = false;
 vector<string> errorList;
 vector<vector<string>> currentProgram;
-int lineCounter = 0, acumulador = 0, contadorPosicao = 0; 
+int lineCounter = 0, acumulador = 0, programCounter = 0; 
 
 
 // Estas funções de trim não são minhas e estão disponíveis em:
@@ -55,13 +55,32 @@ static inline void trim(std::string &s) {
 }
 // ======================================================================================
 
+void printProgram(){
+    for(auto &i : currentProgram){
+        for(auto j : i){
+            cout  <<"{" << j <<  "}";
+        }
+        cout << endl <<"========================" <<endl;
+    }
+    cout << "Total Lines:" << lineCounter <<endl;
+
+}
 
 void printStringVector(vector<string> vetor){
     for(auto i : vetor) cout << i <<" ";
     cout << endl;
 }
 
+void printLabelTable(){
+    for(auto i : codeTable.labelTable) {
+        cout << "Label ===============\n";
+        cout << "Name: " << i.name <<endl;
+        cout << "value: " << i.value <<endl;
+        cout << "line: " << i.line <<endl;
+        cout << "LabelType: " << i.labelType <<endl;
 
+    }
+}
 int isInvalidChar(char character, int indexCounter) {
     // Checks if symbol starts with number
     // Throw codes: 0->invalid char, 1->
@@ -71,13 +90,16 @@ int isInvalidChar(char character, int indexCounter) {
             throw(1);
         }
         // Checks for invalid char
-        else if(!((int) character >= 65 && (int)character <= 90) && !((int)character >=48 && (int)character <=57)) {
-            throw(2);
+        else if(!((int) character >= 65 && (int)character <= 90) && !((int)character >=48 && (int)character <=57)){
+            if(character != '_'){
+                throw(2);
+
+            }
         }
     } 
     
     catch(int errorCode){
-        cout << "Scanner/Lexical error.\n" << errorCode <<endl;
+        cout << "Scanner/Lexical error.\n"  <<endl;
         cout << "Invalid character: '" << character<< "' Line: " << lineCounter << " Column: " << indexCounter+1 <<endl;
         return 1;
     }
@@ -152,70 +174,6 @@ vector<string> scanner(string readLine){
     // cout <<"=========================" <<endl;
 }
 
-Label parseLabel(vector<string> currentPhrase){
-    string name = currentPhrase.at(0);
-    // if(name.back() != ':') throw 2;
-    LabelType labelType = currentPhrase.at(1) =="SPACE" ? typeSpace : typeConst;
-    if(labelType == 0){
-        int value = stoi(currentPhrase.at(2));
-        cout <<"value:" << value <<endl;
-        Label auxLabel(name, labelType, value, lineCounter);
-        return auxLabel;
-    }
-    else if(labelType == 1){
-        Label auxLabel(name, labelType, 0, lineCounter);
-        return auxLabel;
-    }
-
-}
-
-int searchLabelTable(vector<string> currentPhrase ){
-    bool found = false;
-    if(currentPhrase.at(0) == "SECTION") return 0;
-    if(currentPhrase.at(0).back() == ':'){
-        currentPhrase.at(0).pop_back();
-    }
-    for(auto i : codeTable.labelTable){
-        if(i.name == currentPhrase.at(0)){
-            cout<< "Semantical/Parser Error\n";
-            printStringVector(currentPhrase);
-            cout << "Label declared previously at line: " << i.line <<  " Current Line: " << lineCounter <<endl;
-            programError = 1;
-            found = true;
-        } 
-    }
-    if(found){
-        // error
-        return 0;
-    }
-    else{
-
-        if(currentPhrase.size() == 1){
-            cout << "WARNING: ";
-            cout <<"Not enough arguments at label: "<<currentPhrase.at(0)<< " Line:" << lineCounter << endl;
-            cout << "Assuming desired Label is of type SPACE\n";
-            codeTable.labelTable.push_back(Label(currentPhrase.at(0),typeSpace, 0, lineCounter));
-            cout << "END WARNING\n";
-        }
-       
-        else if(currentPhrase.size() == 3 && currentPhrase.at(1) =="CONST"){    
-            codeTable.labelTable.push_back(Label(currentPhrase.at(0),  typeConst, stoi(currentPhrase.at(2)), lineCounter));
-
-        }
-        else if(currentPhrase.size() ==2 && currentPhrase.at(1) =="SPACE"){
-            codeTable.labelTable.push_back(Label(currentPhrase.at(0), typeSpace, 0, lineCounter));
-        }
-        else{
-            cout<< "Syntactical Error\n";
-            cout <<"Unknown type of label at line: " << lineCounter << endl;
-            programError = 1;
-            return 0;
-        }
-        // Found nothing and can add to table
-        return 1;
-    }
-}
-
 int classifyLine(vector<string> vetor){
     auto instructionName = InstructionsTable.find(vetor.front());
     if(instructionName != InstructionsTable.end()){
@@ -225,10 +183,74 @@ int classifyLine(vector<string> vetor){
     return 1;
 }
 
+int searchLabelTable(vector<string> currentPhrase ){
+    bool found = false;
+    if(currentPhrase.at(0) == "SECTION") return 0;
+    if(currentPhrase.at(0).back() == ':')currentPhrase.at(0).pop_back();
+    
+    for(auto i : codeTable.labelTable){
+        if(i.name == currentPhrase.at(0)){
+            cout<< "Semantical/Parser Error\n";
+            printStringVector(currentPhrase);
+            cout << "Label declared previously at line: " << i.line <<  " Current Line: " << lineCounter <<endl;
+            programError = 1;
+            found = true;
+        } 
+    }
+    
+    return !found;
+}
+
+void wrongNumberOfArguments(vector<string> currentPhrase){
+    cout<< "Syntactical Error\n";
+    cout <<"Wrong Number of Arguments at line: " << lineCounter << endl;
+    programError = 1;
+}
+void unknownLabelType(){
+    cout<< "Syntactical Error\n";
+    cout <<"Unknown type of label at line: " << lineCounter << endl;
+    programError = 1;
+}
+
+void parseLabel(vector<string> currentPhrase){
+    
+    if(currentPhrase.at(0).back() == ':')currentPhrase.at(0).pop_back();
+
+    if(currentPhrase.size() == 1){
+        wrongNumberOfArguments(currentPhrase);
+    }
+
+    else if (currentPhrase.at(1) == "CONST"){
+        if(currentPhrase.size() == 3){
+            codeTable.labelTable.push_back(Label(currentPhrase.at(0),  typeConst, stoi(currentPhrase.at(2)),
+            lineCounter, programCounter));
+        }
+        else{
+            wrongNumberOfArguments(currentPhrase);
+        }
+    }
+
+    else if(currentPhrase.at(1) == "SPACE"){
+        if(currentPhrase.size() ==2){
+            codeTable.labelTable.push_back(Label(currentPhrase.at(0), typeSpace, 0, lineCounter, programCounter));
+        }
+        else{
+            wrongNumberOfArguments(currentPhrase);
+        }
+    }
+    else{
+        unknownLabelType();
+    }
+    
+}
 void parser(vector<string> currentPhrase){
     if(sectionState == sectionData){
         if(searchLabelTable(currentPhrase) && currentPhrase.front() !="SECTION"){
-            // parseLabel(currentPhrase);
+            if(currentPhrase.size() >4){
+                wrongNumberOfArguments(currentPhrase);
+            }
+            else parseLabel(currentPhrase);
+            
         }   
     }
     else if (sectionState == sectionText){
@@ -236,18 +258,6 @@ void parser(vector<string> currentPhrase){
 
       }
     }
-
-}
-
-void printProgram(){
-    for(auto &i : currentProgram){
-        for(auto j : i){
-            cout  <<"{" << j <<  "}";
-        }
-        cout << endl <<"========================" <<endl;
-    }
-    cout << "Total Lines:" << lineCounter <<endl;
-
 }
 
 int analyzeCode(ifstream &inFile){
@@ -256,10 +266,12 @@ int analyzeCode(ifstream &inFile){
         getline(inFile,readLine, '\n');
         try{    
             vector<string> tokenizedLine = scanner(readLine);
-            if(!tokenizedLine.empty()) currentProgram.push_back(tokenizedLine);
-            whichCodeSection(tokenizedLine);
+            if(!tokenizedLine.empty()) {
+                currentProgram.push_back(tokenizedLine);
+                whichCodeSection(tokenizedLine);
+            }
 
-            parser(tokenizedLine);
+            if(!tokenizedLine.empty()) parser(tokenizedLine);
             if(programError){
                 throw 0;
             }            
@@ -270,6 +282,8 @@ int analyzeCode(ifstream &inFile){
         }
         
     }
+    printLabelTable();
+
     // printProgram();
     return lineCounter;
 }

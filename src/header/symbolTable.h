@@ -17,20 +17,23 @@ struct Label{
     string name;
     LabelType labelType;
     int line = 0;
+    int programCounter;
     int value = 0;
-    Label(string name, LabelType labelType, int value, int line) : line(0){
+    Label(string name, LabelType labelType, int value, int line, int programCOunter) : line(0){
         this->line = line;
+        this->programCounter = programCounter;
         this->name= name;
         this->labelType = labelType;
         if(this->labelType == typeSpace){
             this->value = value;
         }
     }
+    Label() {}
 };
 struct Parameter{
-    string label;
+    Label label;
     int value;
-    Parameter(string label, int value){
+    Parameter(Label label, int value){
         this->label = label;
         this->value = value;
     }
@@ -39,6 +42,7 @@ struct Parameter{
 struct Instruction{
     string simbolicOpcode;
     int line;
+    int programCounter;
     int opcode;
     int sizeInWords;
     int numberOfParameters;
@@ -56,7 +60,9 @@ struct Instruction{
 struct Directive {
     string simbolicOpcode;
     int value;
+    int line;
     int sizeInWords;
+    int programCounter;
     Directive(string simbolicOpcode, int value, int sizeInWords) {
         this->simbolicOpcode = simbolicOpcode;
         this->value = value;
