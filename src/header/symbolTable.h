@@ -43,7 +43,7 @@ struct Instruction{
     int opcode = 0;
     int sizeInWords = 0;
     int numberOfParameters = 0; 
-    vector<Parameter> parameters;
+    vector<string> parameters;
     
     Instruction(string simbolicOpcode, int opcode, int sizeInWords, int numberOfParameters){
         this->simbolicOpcode = simbolicOpcode;

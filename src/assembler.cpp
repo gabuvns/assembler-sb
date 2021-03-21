@@ -90,25 +90,38 @@ void printInstructionTable(){
         cout << "Line: " << i.line <<endl;
         cout << "Parameters: " << i.numberOfParameters <<endl;
         for(auto j : i.parameters){
-            cout << "Label param:" << j.label->name << " " << j.label->value << endl;
+            cout << "Label param:" << j << " " << j << endl;
         }        
 
     }
 }
 
 // Error printing sections
-void wrongNumberOfArguments(vector<string> codeLine){
+void errorWrongNumberOfArguments(vector<string> codeLine){
     cout<< "Syntactical Error\n";
     cout <<"Wrong Number of Arguments at line: " << lineCounter << endl;
     printStringVector(codeLine);
     programError = 1;
 }
 
-void unknownLabelType(){
+void errorUnknownLabelType(vector<string> codeLine){
     cout<< "Syntactical Error\n";
     cout <<"Unknown type of label at line: " << lineCounter << endl;
     programError = 1;
 }
+
+void errorLabelNotDeclared(vector<string> codeLine()){
+    cout<< "Syntactical Error\n";
+    cout <<"Label Not Declared: " << lineCounter << endl;
+    programError = 1;
+}
+
+void errorInvalidChar(vector<string> codeLine, char invalidChar){
+    cout << "Scanner/Lexical error.\n"  <<endl;
+    cout << "Invalid character: '" << invalidChar << '\''<< endl<< "At line: " << lineCounter <<endl;
+    programError = 1;
+}
+
 int isInvalidChar(char character, int indexCounter) {
     // Checks if symbol starts with number
     // Throw codes: 0->invalid char, 1->
@@ -203,51 +216,69 @@ vector<string> scanner(string readLine){
 Label * linkParameter(string paramName){
     for(auto &i : codeTable.labelTable){
         if(i.name == paramName){
+            cout << "LINK PARAM: " << i.name <<endl;
             return &(i);
         }
     }
+
 }
 
-vector<Parameter> parseCopyParameters(vector<string> codeLine){
-    vector<Parameter> auxVector;
+vector<string> parseCopyParameters(vector<string> codeLine){
+    vector<string> auxVector;
     string parameters = codeLine.at(1);
     string paramName;
-    Parameter auxParameter;
-   
+
+    
     for(auto &i : parameters){
-        if(i==','){
-            auxParameter.label = linkParameter(paramName);
-            auxVector.push_back(auxParameter);
+        if(i==',' ){
+            auxVector.push_back(paramName);
+            paramName.clear();
+        }
+        else if(i == parameters.back()){
+            paramName+=i;
+            auxVector.push_back(paramName);
             paramName.clear();
         }
         else{
             paramName+=i;
         }
     }
-    // Gets second Element
-    auxParameter.label = linkParameter(paramName);
-    auxVector.push_back(auxParameter);
+   
+    if(auxVector.size() == 1){
+        errorWrongNumberOfArguments(codeLine);
+    }
+    // Checks for more than two arguments
+    else if(auxVector.at(0).size() + auxVector.at(0).size()+1 != parameters.size()){
+        // Checks for copy a,b,
+        if(parameters.back() == ','){
+            errorInvalidChar(codeLine, ',');
+        }
+        else{
+            errorWrongNumberOfArguments(codeLine);
+        }
+    }
+    else if(auxVector.at(0)==auxVector.at(1)){
+        cout << "Param1:" << auxVector.at(0) <<endl;
+        cout << "Param2:" << auxVector.at(1) <<endl;
+
+        errorWrongNumberOfArguments(codeLine);
+    }
     return auxVector;
 }
 
-vector<Parameter> addParametersToInstruction(vector<string> codeLine, Instruction auxInstruction){
-    vector<Parameter> auxVector;
+vector<string> addParametersToInstruction(vector<string> codeLine, Instruction auxInstruction){
+    vector<string> auxVector;
 
     if(auxInstruction.simbolicOpcode =="COPY"){
         // Verifica se argumento errado ex: COPY OLD_DATA,NEWDATA ABC
         if(codeLine.size() != 2){
-            wrongNumberOfArguments(codeLine);
+            errorWrongNumberOfArguments(codeLine);
         }
         else{
-            auxVector = parseCopyParameters(codeLine); 
-            // Verifica se argumento errado ex: COPY OLD_DATA,
-            if(auxVector.size() != 2){
-                wrongNumberOfArguments(codeLine);
-            }
-            else{
-                return auxVector; 
+            auxVector = parseCopyParameters(codeLine);             
+            return auxVector; 
 
-            }
+            
         }
     }
     else if(auxInstruction.numberOfParameters != (codeLine.size() - 1)){
@@ -256,7 +287,7 @@ vector<Parameter> addParametersToInstruction(vector<string> codeLine, Instructio
     }
     else{
         cout <<"nao ta pronto\n";
-        wrongNumberOfArguments(codeLine);
+        errorWrongNumberOfArguments(codeLine);
     }
     return auxVector;
 }
@@ -327,7 +358,7 @@ void parseDataLabel(vector<string> codeLine){
     if(codeLine.at(0).back() == ':')codeLine.at(0).pop_back();
 
     if(codeLine.size() == 1){
-        wrongNumberOfArguments(codeLine);
+        errorWrongNumberOfArguments(codeLine);
     }
 
     else if (codeLine.at(1) == "CONST"){
@@ -337,7 +368,7 @@ void parseDataLabel(vector<string> codeLine){
             lineCounter, programCounter));
         }
         else{
-            wrongNumberOfArguments(codeLine);
+            errorWrongNumberOfArguments(codeLine);
         }
     }
 
@@ -347,11 +378,11 @@ void parseDataLabel(vector<string> codeLine){
             codeTable.labelTable.push_back(Label(codeLine.at(0), typeSpace, 0, lineCounter, programCounter));
         }
         else{
-            wrongNumberOfArguments(codeLine);
+            errorWrongNumberOfArguments(codeLine);
         }
     }
     else{
-        unknownLabelType();
+        errorUnknownLabelType(codeLine);
     }
     
 }
@@ -359,7 +390,7 @@ void parser(vector<string> codeLine){
     if(sectionState == sectionData){
         if(!searchLabelTable(codeLine) && codeLine.front() !="SECTION"){
             if(codeLine.size() >4){
-                wrongNumberOfArguments(codeLine);
+                errorWrongNumberOfArguments(codeLine);
             }
             else parseDataLabel(codeLine);
             
