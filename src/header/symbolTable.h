@@ -19,7 +19,7 @@ struct Label{
     int line = 0;
     int programCounter;
     int value = 0;
-    Label(string name, LabelType labelType, int value, int line, int programCOunter) : line(0){
+    Label(string name, LabelType labelType, int value, int line, int programCounter){
         this->line = line;
         this->programCounter = programCounter;
         this->name= name;
@@ -31,30 +31,25 @@ struct Label{
     Label() {}
 };
 struct Parameter{
-    Label label;
-    int value;
-    Parameter(Label label, int value){
-        this->label = label;
-        this->value = value;
-    }
+    Label *label;
+    int value = 0;
+    Parameter() {}
 };
 
 struct Instruction{
     string simbolicOpcode;
-    int line;
-    int programCounter;
-    int opcode;
-    int sizeInWords;
-    int numberOfParameters;
+    int line = 0;
+    int programCounter = 0;
+    int opcode = 0;
+    int sizeInWords = 0;
+    int numberOfParameters = 0; 
     vector<Parameter> parameters;
     
-    Instruction(string simbolicOpcode, int opcode, int sizeInWords, int numberOfParametes){
+    Instruction(string simbolicOpcode, int opcode, int sizeInWords, int numberOfParameters){
         this->simbolicOpcode = simbolicOpcode;
         this->opcode = opcode;
         this->sizeInWords = sizeInWords;
         this->numberOfParameters = numberOfParameters;  
-        this->parameters = parameters;
-
     }
 };
 struct Directive {
@@ -75,11 +70,11 @@ const map<string, Directive> DirectivesTable {
     {"CONST", Directive("CONST", 1, 1)}   
 };
 
-const map<string, Instruction> InstructionsTable{
-    // {"ADD", Instruction(simboliocOpcode, opcode, sizeInWords, numberOfParameters, parameters)}     
+const map<string, Instruction> InstructionsMap{
+    // {"ADD", Instruction(simboliocOpcode, opcode, sizeInWords, numberOfParameters)}     
     {"ADD", Instruction("ADD"   , 1, 2, 1)},     
     {"SUB", Instruction("SUB"   , 2, 2, 1)},
-    {"MUL", Instruction("MULT" , 3, 2, 1)},
+    {"MUL", Instruction("MULT"  , 3, 2, 1)},
     {"DIV", Instruction("DIV"   , 4, 2, 1)},
     {"JMP", Instruction("JMP"   , 5, 2, 1)},
     {"JMPN", Instruction("JMPN" , 6, 2, 1)},
@@ -96,7 +91,7 @@ const map<string, Instruction> InstructionsTable{
 map<string, Label> labelTable;
 
 struct CodeTable{
-    vector<Instruction> textTable;
+    vector<Instruction> instructionTable;
     // vector<Directive> dataTable;
     vector<Label> labelTable;
 };
