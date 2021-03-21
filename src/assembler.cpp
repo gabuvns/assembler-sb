@@ -213,27 +213,42 @@ vector<Parameter> parseCopyParameters(vector<string> codeLine){
     string parameters = codeLine.at(1);
     string paramName;
     Parameter auxParameter;
-    int argNum =1;
+   
     for(auto &i : parameters){
         if(i==','){
             auxParameter.label = linkParameter(paramName);
             auxVector.push_back(auxParameter);
-            cout << "Parametro: " << auxParameter.label->name <<endl;
-            
             paramName.clear();
-            argNum=2;
         }
-        else if(argNum == 2 &&){
-
+        else{
+            paramName+=i;
         }
-        paramName+=i;
     }
+    // Gets second Element
+    auxParameter.label = linkParameter(paramName);
+    auxVector.push_back(auxParameter);
     return auxVector;
 }
+
 vector<Parameter> addParametersToInstruction(vector<string> codeLine, Instruction auxInstruction){
     vector<Parameter> auxVector;
+
     if(auxInstruction.simbolicOpcode =="COPY"){
-        return parseCopyParameters(codeLine);
+        // Verifica se argumento errado ex: COPY OLD_DATA,NEWDATA ABC
+        if(codeLine.size() != 2){
+            wrongNumberOfArguments(codeLine);
+        }
+        else{
+            auxVector = parseCopyParameters(codeLine); 
+            // Verifica se argumento errado ex: COPY OLD_DATA,
+            if(auxVector.size() != 2){
+                wrongNumberOfArguments(codeLine);
+            }
+            else{
+                return auxVector; 
+
+            }
+        }
     }
     else if(auxInstruction.numberOfParameters != (codeLine.size() - 1)){
         Parameter auxParameter;
