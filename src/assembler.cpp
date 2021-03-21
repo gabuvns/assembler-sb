@@ -226,15 +226,15 @@ Label * linkParameter(string paramName){
 vector<string> parseCopyParameters(vector<string> codeLine){
     vector<string> auxVector;
     string parameters = codeLine.at(1);
+    cout <<"param total =" << parameters <<endl;
     string paramName;
-
-    
+    int index =0;
     for(auto &i : parameters){
         if(i==',' ){
             auxVector.push_back(paramName);
             paramName.clear();
         }
-        else if(i == parameters.back()){
+        else if(i == parameters.back() && index == parameters.size()-1){
             paramName+=i;
             auxVector.push_back(paramName);
             paramName.clear();
@@ -242,27 +242,29 @@ vector<string> parseCopyParameters(vector<string> codeLine){
         else{
             paramName+=i;
         }
+        index++;
     }
    
     if(auxVector.size() == 1){
         errorWrongNumberOfArguments(codeLine);
     }
     // Checks for more than two arguments
-    else if(auxVector.at(0).size() + auxVector.at(0).size()+1 != parameters.size()){
+    else if((auxVector.at(0).size() + auxVector.at(1).size()+1) != parameters.size()){
         // Checks for copy a,b,
         if(parameters.back() == ','){
             errorInvalidChar(codeLine, ',');
+
         }
         else{
             errorWrongNumberOfArguments(codeLine);
         }
     }
     else if(auxVector.at(0)==auxVector.at(1)){
-        cout << "Param1:" << auxVector.at(0) <<endl;
-        cout << "Param2:" << auxVector.at(1) <<endl;
-
+        cout<<"erro3\n";
         errorWrongNumberOfArguments(codeLine);
     }
+
+
     return auxVector;
 }
 
@@ -277,8 +279,6 @@ vector<string> addParametersToInstruction(vector<string> codeLine, Instruction a
         else{
             auxVector = parseCopyParameters(codeLine);             
             return auxVector; 
-
-            
         }
     }
     else if(auxInstruction.numberOfParameters != (codeLine.size() - 1)){
