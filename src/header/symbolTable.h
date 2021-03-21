@@ -9,29 +9,29 @@ using std::string;
 using std::vector;
 using std::map;
 
-enum LabelType {
+enum SymbolType {
     typeConst,
     typeSpace
 };
-struct Label{
+struct Symbol{
     string name;
-    LabelType labelType;
+    SymbolType symbolType;
     int line = 0;
     int programCounter;
     int value = 0;
-    Label(string name, LabelType labelType, int value, int line, int programCounter){
+    Symbol(string name, SymbolType symbolType, int value, int line, int programCounter){
         this->line = line;
         this->programCounter = programCounter;
         this->name= name;
-        this->labelType = labelType;
-        if(this->labelType == typeSpace){
+        this->symbolType = symbolType;
+        if(this->symbolType == typeSpace){
             this->value = value;
         }
     }
-    Label() {}
+    Symbol() {}
 };
 struct Parameter{
-    Label *label;
+    Symbol *symbol;
     int value = 0;
     Parameter() {}
 };
@@ -51,6 +51,14 @@ struct Instruction{
         this->sizeInWords = sizeInWords;
         this->numberOfParameters = numberOfParameters;  
     }
+    Instruction(){}
+};
+struct Label{
+    string name;
+    int line;
+    Instruction instruction;
+    Label(){}
+
 };
 struct Directive {
     string simbolicOpcode;
@@ -88,12 +96,12 @@ const map<string, Instruction> InstructionsMap{
     {"STOP", Instruction("STOP", 14, 1, 0)},
 };
 
-map<string, Label> labelTable;
+map<string, Label> LabelMap;
 
 struct CodeTable{
     vector<Instruction> instructionTable;
     // vector<Directive> dataTable;
-    vector<Label> labelTable;
+    vector<Symbol> symbolTable;
 };
 
 #endif

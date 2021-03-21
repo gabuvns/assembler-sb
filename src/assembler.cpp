@@ -55,7 +55,7 @@ static inline void trim(std::string &s) {
 }
 ////////////////////////////////////////////////////////////////////////////////////
 
-
+// Print stiff sections
 void printProgram(){
     for(auto &i : currentProgram){
         for(auto j : i){
@@ -72,13 +72,13 @@ void printStringVector(vector<string> vetor){
     cout << endl;
 }
 
-void printLabelTable(){
-    for(auto i : codeTable.labelTable) {
-        cout << "Label ===============\n";
+void printSymbolTable(){
+    for(auto i : codeTable.symbolTable) {
+        cout << "Symbol ===============\n";
         cout << "Name: " << i.name <<endl;
         cout << "Value: " << i.value <<endl;
         cout << "Line: " << i.line <<endl;
-        cout << "LabelType: " << i.labelType <<endl;
+        cout << "SymbolType: " << i.symbolType <<endl;
 
     }
 }
@@ -88,15 +88,16 @@ void printInstructionTable(){
         cout << "Name: " <<  i.simbolicOpcode<<endl;
         cout << "Opcode: " << i.opcode<<endl;
         cout << "Line: " << i.line <<endl;
+        cout << "ProgramCounter: " <<i.programCounter <<endl;
         cout << "Parameters: " << i.numberOfParameters <<endl;
         for(auto j : i.parameters){
-            cout << "Label param:" << j << " " << j << endl;
+            cout << "Symbol param:" << j << endl;
         }        
 
     }
 }
-
-// Error printing sections
+/////////////////////////////////////////////////////////
+// Error sections
 void errorWrongNumberOfArguments(vector<string> codeLine){
     cout<< "Syntactical Error\n";
     cout <<"Wrong Number of Arguments at line: " << lineCounter << endl;
@@ -104,15 +105,17 @@ void errorWrongNumberOfArguments(vector<string> codeLine){
     programError = 1;
 }
 
-void errorUnknownLabelType(vector<string> codeLine){
+void errorUnknownSymbolType(vector<string> codeLine){
     cout<< "Syntactical Error\n";
-    cout <<"Unknown type of label at line: " << lineCounter << endl;
+    cout <<"Unknown type of symbol at line: " << lineCounter << endl;
+    printStringVector(codeLine);
     programError = 1;
 }
 
-void errorLabelNotDeclared(vector<string> codeLine()){
+void errorSymbolNotDeclared(vector<string> codeLine){
     cout<< "Syntactical Error\n";
-    cout <<"Label Not Declared: " << lineCounter << endl;
+    cout <<"Symbol Not Declared: " << lineCounter << endl;
+    printStringVector(codeLine);
     programError = 1;
 }
 
@@ -122,6 +125,27 @@ void errorInvalidChar(vector<string> codeLine, char invalidChar){
     programError = 1;
 }
 
+void errorInstructionNotExist(vector<string> codeLine){
+    cout<< "Syntactical Error\n";
+    cout <<"Unknown type of symbol at line: " << lineCounter << endl;
+    printStringVector(codeLine);
+    programError = 1;
+}
+
+void errorSymbolAlreadyDeclared(vector<string> codeLine, string line){
+    cout<< "Semantical/Parser Error\n";
+    printStringVector(codeLine);
+    cout << "Symbol declared previously at line: " << line <<  " Current Line: " << lineCounter <<endl;
+    programError = 1;
+}
+
+void errorSymbolAlredyDeclared(vector<string> codeLine, Symbol searchedSymbol){
+    cout<< "Semantical/Parser Error\n";
+    printStringVector(codeLine);
+    cout << "Symbol declared previously at line: " << searchedSymbol.name <<  " Current Line: " << lineCounter <<endl;
+    programError = 1;
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int isInvalidChar(char character, int indexCounter) {
     // Checks if symbol starts with number
     // Throw codes: 0->invalid char, 1->
@@ -147,6 +171,7 @@ int isInvalidChar(char character, int indexCounter) {
     
     return 0;
 }
+
 // Detects which section of the code is currently beign read
 void whichCodeSection(vector<string> readLine){
     if(readLine.front() == "SECTION"){
@@ -213,8 +238,8 @@ vector<string> scanner(string readLine){
     return codeLine;
 }
 
-Label * linkParameter(string paramName){
-    for(auto &i : codeTable.labelTable){
+Symbol * linkParameter(string paramName){
+    for(auto &i : codeTable.symbolTable){
         if(i.name == paramName){
             cout << "LINK PARAM: " << i.name <<endl;
             return &(i);
@@ -226,9 +251,8 @@ Label * linkParameter(string paramName){
 vector<string> parseCopyParameters(vector<string> codeLine){
     vector<string> auxVector;
     string parameters = codeLine.at(1);
-    cout <<"param total =" << parameters <<endl;
     string paramName;
-    int index =0;
+    int index = 0;
     for(auto &i : parameters){
         if(i==',' ){
             auxVector.push_back(paramName);
@@ -281,14 +305,18 @@ vector<string> addParametersToInstruction(vector<string> codeLine, Instruction a
             return auxVector; 
         }
     }
-    else if(auxInstruction.numberOfParameters != (codeLine.size() - 1)){
-        Parameter auxParameter;
-        // auxParameter.label.
+    else if(auxInstruction.simbolicOpcode =="STOP"){
+        // handleStop
+    }
+    else if(auxInstruction.numberOfParameters == (codeLine.size() - 1)){
+        string auxParameter;
+        auxParameter = codeLine.at(1);
+        auxVector.push_back(auxParameter);
     }
     else{
-        cout <<"nao ta pronto\n";
         errorWrongNumberOfArguments(codeLine);
     }
+    
     return auxVector;
 }
 
@@ -307,6 +335,9 @@ int searchInstructionMap(vector<string> codeLine){
     }
 
     else{
+        cout <<"Instruction not found\n" << lineCounter;
+        // errorUnknownSymbolType
+        programError = 1;
         return 0;
     }
 }
@@ -316,32 +347,54 @@ int searchDirectiveTable(vector<string> codeLine){
 
     return 1;
 }
-int classifyLine(vector<string> codeLine){
-    if(searchInstructionMap(codeLine)){
+// If does not find label adds to the table
+void searchLabelMap(vector<string> codeLine){
+    auto searchedLabel = LabelMap.find(codeLine.front());
+    if(searchedLabel == LabelMap.end()){
+        Label auxLabel;
+        if(codeLine.at(0).back() == ':') codeLine.at(0).pop_back();
+        auxLabel.name = codeLine.at(0);
+        auxLabel.line = lineCounter;
 
+        // auxLabel.instruction;
+        programCounter+=2;
+        
+        // LabelMap.insert(codeLine.at(0), )
+    }
+    else{
+        cout <<"Label found, throw error" << endl;
+        cout << "line counter: " << searchedLabel->second.name <<endl;
+    }
+}
+int classifyLine(vector<string> codeLine){
+    // Assumes 0 for instruction, 1 for symbol
+    int typeOfLine = codeLine.at(0).back() == ':' ? 1 : 0;
+    
+    if(typeOfLine == 1){
+        // searchLabelMap(codeLine);
+    }
+    else if(typeOfLine == 0){
+        searchInstructionMap(codeLine);
     }
     else if(searchDirectiveTable(codeLine)){
 
     }
     else{
-        // Error label not found
+        // Error symbol not found
     }
     
     return 1;
 }
 
-// If found label on table returns true else false
-int searchLabelTable(vector<string> codeLine ){
+// If found symbol on table returns true else false
+int searchSymbolTable(vector<string> codeLine ){
     bool found = false;
     if(codeLine.at(0) == "SECTION") return 0;
     if(codeLine.at(0).back() == ':')codeLine.at(0).pop_back();
     
-    for(auto i : codeTable.labelTable){
+    for(auto i : codeTable.symbolTable){
         if(i.name == codeLine.at(0)){
-            cout<< "Semantical/Parser Error\n";
-            printStringVector(codeLine);
-            cout << "Label declared previously at line: " << i.line <<  " Current Line: " << lineCounter <<endl;
-            programError = 1;
+            errorSymbolAlreadyDeclared(codeLine, i.name);
             found = true;
         } 
     }
@@ -352,8 +405,8 @@ int searchLabelTable(vector<string> codeLine ){
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-// Scans data label
-void parseDataLabel(vector<string> codeLine){
+// Scans data symbol
+void parseDataSymbol(vector<string> codeLine){
     
     if(codeLine.at(0).back() == ':')codeLine.at(0).pop_back();
 
@@ -364,7 +417,7 @@ void parseDataLabel(vector<string> codeLine){
     else if (codeLine.at(1) == "CONST"){
         if(codeLine.size() == 3){
             programCounter++;
-            codeTable.labelTable.push_back(Label(codeLine.at(0),  typeConst, stoi(codeLine.at(2)),
+            codeTable.symbolTable.push_back(Symbol(codeLine.at(0),  typeConst, stoi(codeLine.at(2)),
             lineCounter, programCounter));
         }
         else{
@@ -375,30 +428,30 @@ void parseDataLabel(vector<string> codeLine){
     else if(codeLine.at(1) == "SPACE"){
         if(codeLine.size() ==2){
             programCounter++;
-            codeTable.labelTable.push_back(Label(codeLine.at(0), typeSpace, 0, lineCounter, programCounter));
+            codeTable.symbolTable.push_back(Symbol(codeLine.at(0), typeSpace, 0, lineCounter, programCounter));
         }
         else{
             errorWrongNumberOfArguments(codeLine);
         }
     }
     else{
-        errorUnknownLabelType(codeLine);
+        errorUnknownSymbolType(codeLine);
     }
     
 }
 void parser(vector<string> codeLine){
     if(sectionState == sectionData){
-        if(!searchLabelTable(codeLine) && codeLine.front() !="SECTION"){
+        if(!searchSymbolTable(codeLine) && codeLine.front() !="SECTION"){
             if(codeLine.size() >4){
                 errorWrongNumberOfArguments(codeLine);
             }
-            else parseDataLabel(codeLine);
+            else parseDataSymbol(codeLine);
             
         }   
     }
     else if (sectionState == sectionText){
-      if(classifyLine(codeLine)){
-
+      if(codeLine.front() != "SECTION"){
+            classifyLine(codeLine);
       }
     }
 }
@@ -425,8 +478,8 @@ int analyzeCode(ifstream &inFile){
         }
         
     }
-    // printLabelTable();
-
+    // printSymbolTable();
+    printInstructionTable();
     // printProgram();
     return lineCounter;
 }
