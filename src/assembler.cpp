@@ -20,12 +20,8 @@ enum SectionState {
     sectionData,
     sectionText
 };
-enum ProgramState {
-    firstPassageState ,
-    secondPassageState
-};
 
-ProgramState programState= firstPassageState;
+int wasSectionDataReadFirst = 0;
 SectionState sectionState = sectionText;
 CodeTable codeTable;
 bool programError = false;
@@ -270,7 +266,9 @@ vector<string> scanner(string readLine){
         
         indexCounter++;
     }
-
+    if(lineCounter == 1 && codeLine.at(1) == "DATA"){
+        wasSectionDataReadFirst = 1;
+    }
     return codeLine;
 }
 
@@ -497,7 +495,7 @@ void parser(vector<string> codeLine){
       }
     }
 }
-int firstPassage(ifstream &inFile){
+int startAssembler(ifstream &inFile){
     while(!inFile.eof()){
         string readLine;
         getline(inFile,readLine, '\n');
@@ -539,10 +537,13 @@ vector<Symbol> parameterLinking(vector<string> parameters){
 }
 
 int labelLinking(string paramName){
-    int pc;
+    int pc = 0;
+    if(wasSectionDataReadFirst){
+        pc -= codeTable.symbolTable.size();
+    }
     for(auto const&[nome, valor] : LabelMap){
         if(paramName == nome){
-            pc = valor.instruction.programCounter;
+            pc += valor.instruction.programCounter;
         }
     }
     return pc;
@@ -550,37 +551,54 @@ int labelLinking(string paramName){
 
 int assembleToObject(){
     std::ofstream outputFile;
-    outputFile.open("meuarquivo.obj");
+    outputFile.open("myobjfile.obj");
     // Iterates trough instruction list
+    int pcDifference = codeTable.instructionTable.back().programCounter - codeTable.symbolTable.back().programCounter; 
+    
     for(auto &i : codeTable.instructionTable){
         cout << i.opcode << " ";
         outputFile << i.opcode << " ";
         // Gathers Symbol
         // Check if is Jump
         if(i.opcode >= 5 && i.opcode<=8){
-            cout << labelLinking(i.parameters.at(0))<<endl;
             cout << labelLinking(i.parameters.at(0)) << " ";
-            outputFile << labelLinking(i.parameters.at(0))<< " ";
+            outputFile << labelLinking(i.parameters.at(0)) << " ";
         }
-
         else{
-            i.linkedParameters = parameterLinking(i.parameters);
-            for(auto &j : i.linkedParameters){
-                cout << j.programCounter <<" ";
-                outputFile << j.programCounter <<" ";
-            } 
+            if(wasSectionDataReadFirst){
+                i.linkedParameters = parameterLinking(i.parameters);
+                for(auto &j : i.linkedParameters){
+                    cout << j.programCounter + pcDifference<<" ";
+                    outputFile << j.programCounter + pcDifference<<" ";
+                } 
+            }
+            else{
+                i.linkedParameters = parameterLinking(i.parameters);
+                for(auto &j : i.linkedParameters){
+                    cout << j.programCounter <<" ";
+                    outputFile << j.programCounter <<" ";
+                } 
+
+            }
         }
     }
+    // PrintSymbol
+    for(auto &i : codeTable.symbolTable){
+        if(i.symbolType == typeSpace){
+            cout << 0 << " "; 
+            outputFile << 0 << " ";    
+        
+        }
+        else{
+            cout << i.value << " ";
+            outputFile << i.value << " ";
+        }
+    } 
 }
 
-void resetFileStream(ifstream &inFile){
-    inFile.clear();
-    inFile.seekg(0, std::ios::beg);
-}
-
-int analyzeCode(ifstream &inFile){
-    firstPassage(inFile);
-    resetFileStream(inFile);
+void analyzeCode(ifstream &inFile){
+    startAssembler(inFile);
     assembleToObject();
+    cout << "\nWritten to file: 'myobjfile.objs'" <<endl;
    
 }

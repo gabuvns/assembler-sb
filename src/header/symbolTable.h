@@ -24,7 +24,7 @@ struct Symbol{
         this->programCounter = programCounter;
         this->name= name;
         this->symbolType = symbolType;
-        if(this->symbolType == typeSpace){
+        if(this->symbolType == typeConst){
             this->value = value;
         }
     }
@@ -57,6 +57,7 @@ struct Label{
     Label(){}
 
 };
+
 struct Directive {
     string simbolicOpcode;
     int value;
