@@ -97,13 +97,12 @@ void printInstructionTable(){
     }
 }
 void printLabelMap(){
-    for (auto const& [key, val] : LabelMap)
-{
-    std::cout << "key"<<key        // string (key)
-              << ':'  
-              << "Name" << val.name        // string's value
-              << std::endl;
-}
+    for (auto const& [key, val] : LabelMap){
+        std::cout << "key"<<key        // string (key)
+                << ':'  
+                << "Name" << val.name        // string's value
+                << std::endl;
+    }
 }
 /////////////////////////////////////////////////////////
 // Error sections
@@ -112,13 +111,17 @@ void errorWrongNumberOfArguments(vector<string> codeLine){
     cout <<"Wrong Number of Arguments at line: " << lineCounter << endl;
     printStringVector(codeLine);
     programError = 1;
+    cout << endl;
+
 }
 
 void errorUnknownSymbolType(vector<string> codeLine){
     cout<< "Syntactical Error\n";   
-    cout <<"Unknown type of symbol at line: " << lineCounter << endl;
+    cout <<"Unknown type of symbol directive at line: " << lineCounter << endl;
     printStringVector(codeLine);
     programError = 1;
+    cout << endl;
+
 }
 
 void errorSymbolNotDeclared(vector<string> codeLine){
@@ -126,12 +129,16 @@ void errorSymbolNotDeclared(vector<string> codeLine){
     cout <<"Symbol Not Declared: " << lineCounter << endl;
     printStringVector(codeLine);
     programError = 1;
+    cout << endl;
+
 }
 
 void errorInvalidChar(vector<string> codeLine, char invalidChar){
     cout << "Scanner/Lexical error.\n"  <<endl;
     cout << "Invalid character: '" << invalidChar << '\''<< endl<< "At line: " << lineCounter <<endl;
     programError = 1;
+    cout << endl;
+
 }
 
 void errorInstructionDoesNotExist(vector<string> codeLine){
@@ -139,6 +146,8 @@ void errorInstructionDoesNotExist(vector<string> codeLine){
     cout <<"Instruction does not exist at line: " << lineCounter << endl;
     printStringVector(codeLine);
     programError = 1;
+    cout << endl;
+
 }
 
 
@@ -147,6 +156,8 @@ void errorSymbolAlreadyDeclared(vector<string> codeLine, int line){
     printStringVector(codeLine);
     cout << "Symbol declared previously at line: " << line <<  " Current Line: " << lineCounter <<endl;
     programError = 1;
+    cout << endl;
+
 }
 
 void errorLabelAlreadyDeclared(vector<string> codeLine){
@@ -154,6 +165,16 @@ void errorLabelAlreadyDeclared(vector<string> codeLine){
     printStringVector(codeLine);
     cout << "Label already declared previously " << "Current Line: " << lineCounter <<endl;
     programError = 1;
+    cout << endl;
+}
+
+void wrongSymbolDeclaration(vector<string> codeLine){
+    cout<< "Syntactical Error\n";
+    printStringVector(codeLine);
+    cout << "Symbol wasn't declared the correct way:" << "Current Line: " << lineCounter <<endl;
+    cout <<"Declare as <<NAME>: <DIRECTIVE>>" <<endl;
+    programError = 1;
+    cout << endl;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int isInvalidChar(char character, int indexCounter) {
@@ -294,7 +315,6 @@ vector<string> parseCopyParameters(vector<string> codeLine){
         }
     }
     else if(auxVector.at(0)==auxVector.at(1)){
-        cout<<"erro3\n";
         errorWrongNumberOfArguments(codeLine);
     }
 
@@ -345,7 +365,6 @@ int searchInstructionMap(vector<string> codeLine){
     }
 
     else{
-        cout <<"Instruction not found\n" << lineCounter;
         errorInstructionDoesNotExist(codeLine);
         programError = 1;
         return 0;
@@ -437,7 +456,7 @@ void parseDataSymbol(vector<string> codeLine){
     if(codeLine.at(0).back() == ':')codeLine.at(0).pop_back();
 
     if(codeLine.size() == 1){
-        errorWrongNumberOfArguments(codeLine);
+        wrongSymbolDeclaration(codeLine);
     }
 
     else if (codeLine.at(1) == "CONST"){
@@ -495,7 +514,7 @@ int analyzeCode(ifstream &inFile){
 
             if(!tokenizedLine.empty()) parser(tokenizedLine);
             if(programError){
-                throw 0;
+                // throw 0;
             }            
         }
         catch (int error){
@@ -505,7 +524,7 @@ int analyzeCode(ifstream &inFile){
         
     }
     // printSymbolTable();
-    printInstructionTable();
+    // printInstructionTable();
     // printProgram();
     return lineCounter;
 }
