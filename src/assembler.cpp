@@ -274,16 +274,6 @@ vector<string> scanner(string readLine){
     return codeLine;
 }
 
-Symbol * linkParameter(string paramName){
-    for(auto &i : codeTable.symbolTable){
-        if(i.name == paramName){
-            cout << "LINK PARAM: " << i.name <<endl;
-            return &(i);
-        }
-    }
-
-}
-
 vector<string> parseCopyParameters(vector<string> codeLine){
     vector<string> auxVector;
     string parameters = codeLine.at(1);
@@ -366,6 +356,7 @@ int searchInstructionMap(vector<string> codeLine){
         auxInstruction.parameters = addParametersToInstruction(codeLine, auxInstruction);
         codeTable.instructionTable.push_back(auxInstruction);
         programCounter+=auxInstruction.sizeInWords;
+
         return 1;
     }
 
@@ -403,6 +394,7 @@ void searchLabelMap(vector<string> codeLine){
             auxInstruction.programCounter = programCounter;
             auxInstruction.parameters = addParametersToInstruction(auxVector, auxInstruction);
             programCounter+=auxInstruction.sizeInWords;
+            codeTable.instructionTable.push_back(auxInstruction);
             auxLabel.instruction = auxInstruction;
             
             LabelMap.insert({codeLine.at(0), auxLabel});
@@ -527,15 +519,60 @@ int firstPassage(ifstream &inFile){
         }
         
     }
-    printSymbolTable();
-    printInstructionTable();
-    printLabelMap();
-    printProgram();
+    // printSymbolTable();
+    // printInstructionTable();
+    // printLabelMap();
+    // printProgram();
     return lineCounter;
 }
-int secondPassage(ifstream &inFile){
 
+vector<Symbol> parameterLinking(vector<string> parameters){
+    vector<Symbol> auxSymbol;
+    for(auto &i : parameters){
+        for(auto &j : codeTable.symbolTable){
+            if(i == j.name){
+                auxSymbol.push_back(j);
+            }
+        }
+    }
+    return auxSymbol;
 }
+
+int labelLinking(string paramName){
+    int pc;
+    for(auto const&[nome, valor] : LabelMap){
+        if(paramName == nome){
+            pc = valor.instruction.programCounter;
+        }
+    }
+    return pc;
+}
+
+int assembleToObject(){
+    std::ofstream outputFile;
+    outputFile.open("meuarquivo.obj");
+    // Iterates trough instruction list
+    for(auto &i : codeTable.instructionTable){
+        cout << i.opcode << " ";
+        outputFile << i.opcode << " ";
+        // Gathers Symbol
+        // Check if is Jump
+        if(i.opcode >= 5 && i.opcode<=8){
+            cout << labelLinking(i.parameters.at(0))<<endl;
+            cout << labelLinking(i.parameters.at(0)) << " ";
+            outputFile << labelLinking(i.parameters.at(0))<< " ";
+        }
+
+        else{
+            i.linkedParameters = parameterLinking(i.parameters);
+            for(auto &j : i.linkedParameters){
+                cout << j.programCounter <<" ";
+                outputFile << j.programCounter <<" ";
+            } 
+        }
+    }
+}
+
 void resetFileStream(ifstream &inFile){
     inFile.clear();
     inFile.seekg(0, std::ios::beg);
@@ -544,7 +581,6 @@ void resetFileStream(ifstream &inFile){
 int analyzeCode(ifstream &inFile){
     firstPassage(inFile);
     resetFileStream(inFile);
-    secondPassage(inFile);
-    cout << "End of first Passage\n";
+    assembleToObject();
    
 }

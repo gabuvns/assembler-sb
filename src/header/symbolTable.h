@@ -30,20 +30,17 @@ struct Symbol{
     }
     Symbol() {}
 };
-struct Parameter{
-    Symbol *symbol;
-    int value = 0;
-    Parameter() {}
-};
+
 
 struct Instruction{
     string simbolicOpcode;
+    int opcode = 0;
     int line = 0;
     int programCounter = 0;
-    int opcode = 0;
     int sizeInWords = 0;
     int numberOfParameters = 0; 
     vector<string> parameters;
+    vector<Symbol> linkedParameters;
     
     Instruction(string simbolicOpcode, int opcode, int sizeInWords, int numberOfParameters){
         this->simbolicOpcode = simbolicOpcode;
@@ -82,7 +79,7 @@ const map<string, Instruction> InstructionsMap{
     // {"ADD", Instruction(simboliocOpcode, opcode, sizeInWords, numberOfParameters)}     
     {"ADD", Instruction("ADD"   , 1, 2, 1)},     
     {"SUB", Instruction("SUB"   , 2, 2, 1)},
-    {"MUL", Instruction("MULT"  , 3, 2, 1)},
+    {"MUL", Instruction("MUL"  , 3, 2, 1)},
     {"DIV", Instruction("DIV"   , 4, 2, 1)},
     {"JMP", Instruction("JMP"   , 5, 2, 1)},
     {"JMPN", Instruction("JMPN" , 6, 2, 1)},
