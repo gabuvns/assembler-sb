@@ -21,11 +21,11 @@ enum SectionState {
     sectionText
 };
 enum ProgramState {
-    firstPassage ,
-    secondPassage
+    firstPassageState ,
+    secondPassageState
 };
 
-ProgramState programState= firstPassage;
+ProgramState programState= firstPassageState;
 SectionState sectionState = sectionText;
 CodeTable codeTable;
 bool programError = false;
@@ -500,8 +500,7 @@ void parser(vector<string> codeLine){
       }
     }
 }
-
-int analyzeCode(ifstream &inFile){
+int firstPassage(ifstream &inFile){
     while(!inFile.eof()){
         string readLine;
         getline(inFile,readLine, '\n');
@@ -525,6 +524,20 @@ int analyzeCode(ifstream &inFile){
     }
     // printSymbolTable();
     // printInstructionTable();
-    // printProgram();
+    printProgram();
     return lineCounter;
+}
+int secondPassage(ifstream &inFile){
+
+}
+void resetFileStream(ifstream &inFile){
+    inFile.clear();
+    inFile.seekg(0, std::ios::beg);
+}
+int analyzeCode(ifstream &inFile){
+    firstPassage(inFile);
+    resetFileStream(inFile);
+    secondPassage(inFile);
+    cout << "End of first Passage\n";
+   
 }
