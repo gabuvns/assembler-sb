@@ -96,6 +96,15 @@ void printInstructionTable(){
 
     }
 }
+void printLabelMap(){
+    for (auto const& [key, val] : LabelMap)
+{
+    std::cout << "key"<<key        // string (key)
+              << ':'  
+              << "Name" << val.name        // string's value
+              << std::endl;
+}
+}
 /////////////////////////////////////////////////////////
 // Error sections
 void errorWrongNumberOfArguments(vector<string> codeLine){
@@ -106,7 +115,7 @@ void errorWrongNumberOfArguments(vector<string> codeLine){
 }
 
 void errorUnknownSymbolType(vector<string> codeLine){
-    cout<< "Syntactical Error\n";
+    cout<< "Syntactical Error\n";   
     cout <<"Unknown type of symbol at line: " << lineCounter << endl;
     printStringVector(codeLine);
     programError = 1;
@@ -125,24 +134,25 @@ void errorInvalidChar(vector<string> codeLine, char invalidChar){
     programError = 1;
 }
 
-void errorInstructionNotExist(vector<string> codeLine){
+void errorInstructionDoesNotExist(vector<string> codeLine){
     cout<< "Syntactical Error\n";
-    cout <<"Unknown type of symbol at line: " << lineCounter << endl;
+    cout <<"Instruction does not exist at line: " << lineCounter << endl;
     printStringVector(codeLine);
     programError = 1;
 }
 
-void errorSymbolAlreadyDeclared(vector<string> codeLine, string line){
+
+void errorSymbolAlreadyDeclared(vector<string> codeLine, int line){
     cout<< "Semantical/Parser Error\n";
     printStringVector(codeLine);
     cout << "Symbol declared previously at line: " << line <<  " Current Line: " << lineCounter <<endl;
     programError = 1;
 }
 
-void errorSymbolAlredyDeclared(vector<string> codeLine, Symbol searchedSymbol){
+void errorLabelAlreadyDeclared(vector<string> codeLine){
     cout<< "Semantical/Parser Error\n";
     printStringVector(codeLine);
-    cout << "Symbol declared previously at line: " << searchedSymbol.name <<  " Current Line: " << lineCounter <<endl;
+    cout << "Label already declared previously " << "Current Line: " << lineCounter <<endl;
     programError = 1;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,7 +346,7 @@ int searchInstructionMap(vector<string> codeLine){
 
     else{
         cout <<"Instruction not found\n" << lineCounter;
-        // errorUnknownSymbolType
+        errorInstructionDoesNotExist(codeLine);
         programError = 1;
         return 0;
     }
@@ -350,20 +360,36 @@ int searchDirectiveTable(vector<string> codeLine){
 // If does not find label adds to the table
 void searchLabelMap(vector<string> codeLine){
     auto searchedLabel = LabelMap.find(codeLine.front());
-    if(searchedLabel == LabelMap.end()){
+    // Label not yet found
+    if(searchedLabel== LabelMap.end() && LabelMap.size() != 1){
         Label auxLabel;
         if(codeLine.at(0).back() == ':') codeLine.at(0).pop_back();
         auxLabel.name = codeLine.at(0);
-        auxLabel.line = lineCounter;
 
-        // auxLabel.instruction;
-        programCounter+=2;
-        
-        // LabelMap.insert(codeLine.at(0), )
+        auxLabel.line = lineCounter;
+        // Search for instruction
+        vector<string> auxVector = codeLine;
+        auxVector.erase(auxVector.begin());
+        // printStringVector(codeLine);
+        auto searchedInstruction = InstructionsMap.find(auxVector.front());
+        // If found instruction
+        if(searchedInstruction !=  InstructionsMap.end()){   
+            Instruction auxInstruction = searchedInstruction->second;
+            auxInstruction.line = lineCounter;
+            auxInstruction.programCounter = programCounter;
+            auxInstruction.parameters = addParametersToInstruction(auxVector, auxInstruction);
+            programCounter+=auxInstruction.sizeInWords;
+            auxLabel.instruction = auxInstruction;
+            
+            LabelMap.insert({codeLine.at(0), auxLabel});
+        }
+        // Didn't find instruction
+        else{
+            errorInstructionDoesNotExist(codeLine);
+        }
     }
     else{
-        cout <<"Label found, throw error" << endl;
-        cout << "line counter: " << searchedLabel->second.name <<endl;
+        errorLabelAlreadyDeclared(codeLine);
     }
 }
 int classifyLine(vector<string> codeLine){
@@ -371,7 +397,7 @@ int classifyLine(vector<string> codeLine){
     int typeOfLine = codeLine.at(0).back() == ':' ? 1 : 0;
     
     if(typeOfLine == 1){
-        // searchLabelMap(codeLine);
+        searchLabelMap(codeLine);
     }
     else if(typeOfLine == 0){
         searchInstructionMap(codeLine);
@@ -394,7 +420,7 @@ int searchSymbolTable(vector<string> codeLine ){
     
     for(auto i : codeTable.symbolTable){
         if(i.name == codeLine.at(0)){
-            errorSymbolAlreadyDeclared(codeLine, i.name);
+            errorSymbolAlreadyDeclared(codeLine, i.line);
             found = true;
         } 
     }
