@@ -78,9 +78,12 @@ void printSymbolTable(){
         cout << "Name: " << i.name <<endl;
         cout << "Value: " << i.value <<endl;
         cout << "Line: " << i.line <<endl;
+        cout << "ProgramCounter: " << i.programCounter <<endl;
         cout << "SymbolType: " << i.symbolType <<endl;
-
     }
+
+    cout <<endl;
+
 }
 void printInstructionTable(){
     for(auto i : codeTable.instructionTable) {
@@ -93,16 +96,20 @@ void printInstructionTable(){
         for(auto j : i.parameters){
             cout << "Symbol param:" << j << endl;
         }        
-
     }
+
+    cout <<endl;
+
 }
 void printLabelMap(){
     for (auto const& [key, val] : LabelMap){
-        std::cout << "key"<<key        // string (key)
-                << ':'  
-                << "Name" << val.name        // string's value
+        cout << "Label ===============\n";
+        std::cout << "Nome: "<<key<<endl  
+                << "Valor: " << val.instruction.simbolicOpcode 
                 << std::endl;
     }
+
+    cout <<endl;
 }
 /////////////////////////////////////////////////////////
 // Error sections
@@ -112,7 +119,6 @@ void errorWrongNumberOfArguments(vector<string> codeLine){
     printStringVector(codeLine);
     programError = 1;
     cout << endl;
-
 }
 
 void errorUnknownSymbolType(vector<string> codeLine){
@@ -121,7 +127,6 @@ void errorUnknownSymbolType(vector<string> codeLine){
     printStringVector(codeLine);
     programError = 1;
     cout << endl;
-
 }
 
 void errorSymbolNotDeclared(vector<string> codeLine){
@@ -461,9 +466,9 @@ void parseDataSymbol(vector<string> codeLine){
 
     else if (codeLine.at(1) == "CONST"){
         if(codeLine.size() == 3){
-            programCounter++;
             codeTable.symbolTable.push_back(Symbol(codeLine.at(0),  typeConst, stoi(codeLine.at(2)),
             lineCounter, programCounter));
+            programCounter++;
         }
         else{
             errorWrongNumberOfArguments(codeLine);
@@ -472,8 +477,8 @@ void parseDataSymbol(vector<string> codeLine){
 
     else if(codeLine.at(1) == "SPACE"){
         if(codeLine.size() ==2){
-            programCounter++;
             codeTable.symbolTable.push_back(Symbol(codeLine.at(0), typeSpace, 0, lineCounter, programCounter));
+            programCounter++;
         }
         else{
             errorWrongNumberOfArguments(codeLine);
@@ -522,8 +527,9 @@ int firstPassage(ifstream &inFile){
         }
         
     }
-    // printSymbolTable();
-    // printInstructionTable();
+    printSymbolTable();
+    printInstructionTable();
+    printLabelMap();
     printProgram();
     return lineCounter;
 }
@@ -534,6 +540,7 @@ void resetFileStream(ifstream &inFile){
     inFile.clear();
     inFile.seekg(0, std::ios::beg);
 }
+
 int analyzeCode(ifstream &inFile){
     firstPassage(inFile);
     resetFileStream(inFile);
