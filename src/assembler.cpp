@@ -1,3 +1,7 @@
+/*
+Author: Carlos Gabriel Vilas Novas Soares
+Data: 03/22/2021
+*/
 #include <iostream>
 #include <fstream>
 #include <set>
