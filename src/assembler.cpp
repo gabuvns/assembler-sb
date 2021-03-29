@@ -28,7 +28,7 @@ enum SectionState {
 int wasSectionDataReadFirst = 0;
 SectionState sectionState = sectionText;
 CodeTable codeTable;
-bool programError = false;
+int programError = 0;
 vector<string> errorList;
 vector<vector<string>> currentProgram;
 int lineCounter = 0, acumulador = 0, programCounter = 0; 
@@ -129,10 +129,9 @@ void errorUnknownSymbolType(vector<string> codeLine){
     cout << endl;
 }
 
-void errorSymbolNotDeclared(vector<string> codeLine){
-    cout<< "Syntactical Error\n";
-    cout <<"Symbol Not Declared: " << lineCounter << endl;
-    printStringVector(codeLine);
+void errorSymbolNotDeclared(string codeLine){
+    cout<< "Semantical Error\n";
+    cout << "Symbol not declared previously: " << codeLine <<endl;
     programError = 1;
     cout << endl;
 
@@ -264,7 +263,7 @@ vector<string> scanner(string readLine){
         else if(i!='-' && i!=',' && isInvalidChar(i, indexCounter)){
             cout << "            " << readLine << endl;
             cout <<"            " ; for(int i =0; i < indexCounter; i++) cout <<" "; cout<< "^" <<endl;
-            programError = true;
+            programError = 1;
         }
         else currentWord +=i;
         
@@ -406,7 +405,12 @@ void searchLabelMap(vector<string> codeLine){
             errorInstructionDoesNotExist(codeLine);
         }
     }
-    else{
+    //It can look counter-ituitive, but searchedElement can be different (meaning no element found on map) 
+    //But filled with memory 
+    else if(LabelMap.size() != 1 && searchedLabel != LabelMap.end()){
+        errorLabelAlreadyDeclared(codeLine);
+    }
+    else if(LabelMap.size() == 1 && searchedLabel == LabelMap.end()){
         errorLabelAlreadyDeclared(codeLine);
     }
 }
@@ -494,12 +498,12 @@ void parser(vector<string> codeLine){
         }   
     }
     else if (sectionState == sectionText){
-      if(codeLine.front() != "SECTION"){
+        if(codeLine.front() != "SECTION"){
             classifyLine(codeLine);
-      }
+        }
     }
 }
-int startAssembler(ifstream &inFile){
+int firstPassage(ifstream &inFile){
     while(!inFile.eof()){
         string readLine;
         getline(inFile,readLine, '\n');
@@ -531,10 +535,15 @@ int startAssembler(ifstream &inFile){
 vector<Symbol> parameterLinking(vector<string> parameters){
     vector<Symbol> auxSymbol;
     for(auto &i : parameters){
+        bool foundSymbol =false;
         for(auto &j : codeTable.symbolTable){
             if(i == j.name){
+                foundSymbol = true;
                 auxSymbol.push_back(j);
             }
+        }
+        if(!foundSymbol){
+            errorSymbolNotDeclared(i);
         }
     }
     return auxSymbol;
@@ -553,33 +562,33 @@ int labelLinking(string paramName){
     return pc;
 }
 
-int assembleToObject(){
+void  assembleToObject(){
     std::ofstream outputFile;
     outputFile.open("myobjfile.obj");
     // Iterates trough instruction list
     int pcDifference = codeTable.instructionTable.back().programCounter - codeTable.symbolTable.back().programCounter; 
     
     for(auto &i : codeTable.instructionTable){
-        cout << i.opcode << " ";
+        // cout << i.opcode << " ";
         outputFile << i.opcode << " ";
         // Gathers Symbol
         // Check if is Jump
         if(i.opcode >= 5 && i.opcode<=8){
-            cout << labelLinking(i.parameters.at(0)) << " ";
+            // cout << labelLinking(i.parameters.at(0)) << " ";
             outputFile << labelLinking(i.parameters.at(0)) << " ";
         }
         else{
             if(wasSectionDataReadFirst){
                 i.linkedParameters = parameterLinking(i.parameters);
                 for(auto &j : i.linkedParameters){
-                    cout << j.programCounter + pcDifference<<" ";
+                    // cout << j.programCounter + pcDifference<<" ";
                     outputFile << j.programCounter + pcDifference<<" ";
                 } 
             }
             else{
                 i.linkedParameters = parameterLinking(i.parameters);
                 for(auto &j : i.linkedParameters){
-                    cout << j.programCounter <<" ";
+                    // cout << j.programCounter <<" ";
                     outputFile << j.programCounter <<" ";
                 } 
 
@@ -589,20 +598,26 @@ int assembleToObject(){
     // PrintSymbol
     for(auto &i : codeTable.symbolTable){
         if(i.symbolType == typeSpace){
-            cout << 0 << " "; 
+            // cout << 0 << " "; 
             outputFile << 0 << " ";    
         
         }
         else{
-            cout << i.value << " ";
+            // cout << i.value << " ";
             outputFile << i.value << " ";
         }
     } 
 }
 
+
 void analyzeCode(ifstream &inFile){
-    startAssembler(inFile);
+    firstPassage(inFile);
     assembleToObject();
-    cout << "\nWritten to file: 'myobjfile.objs'" <<endl;
+    if(!programError){
+        cout << "\nWritten to file: 'myobjfile.obj'" <<endl;
+    }
+    else{
+        cout << "Program ended with errors\nCreated obj file contains errors and should not be used\n";
+    }
    
 }
