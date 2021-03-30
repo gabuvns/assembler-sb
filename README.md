@@ -74,9 +74,3 @@ O programa recebe dois argumentos: o nome do arquivo a ser montado, e o nome do 
 ## Author
 
 * **Carlos Gabriel Vilas Novas Soares** - [Github](https://github.com/gabuvns)
-
-## Acknowledgments
-
-* 
-* 
-* 
