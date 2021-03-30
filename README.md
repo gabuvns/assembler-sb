@@ -41,7 +41,7 @@ This program takes the name of the file to be assembled as an argument and optio
 ## Começando :brazil:
 Este montador suporta as instruções disponíveis na tabela disponível no início do README.
 
-## Pré=requisitos
+## Pré-requisitos
 Precisamos apenas de:
 
 ```
