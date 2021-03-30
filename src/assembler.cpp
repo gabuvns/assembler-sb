@@ -24,7 +24,7 @@ enum SectionState {
     sectionData,
     sectionText
 };
-
+string _outputFileName = "mybinfile.obj";
 int wasSectionDataReadFirst = 0;
 SectionState sectionState = sectionText;
 CodeTable codeTable;
@@ -564,7 +564,7 @@ int labelLinking(string paramName){
 
 void  assembleToObject(){
     std::ofstream outputFile;
-    outputFile.open("myobjfile.obj");
+    outputFile.open(_outputFileName);
     // Iterates trough instruction list
     int pcDifference = codeTable.instructionTable.back().programCounter - codeTable.symbolTable.back().programCounter; 
     
@@ -610,11 +610,14 @@ void  assembleToObject(){
 }
 
 
-void analyzeCode(ifstream &inFile){
+void analyzeCode(ifstream &inFile, string outputFileName){
+    if(!outputFileName.empty()){
+        _outputFileName = outputFileName;
+    }
     firstPassage(inFile);
     assembleToObject();
     if(!programError){
-        cout << "\nWritten to file: 'myobjfile.obj'" <<endl;
+        cout << "\nWritten to file: "<< _outputFileName <<endl;
     }
     else{
         cout << "Program ended with errors\nCreated obj file contains errors and should not be used\n";
