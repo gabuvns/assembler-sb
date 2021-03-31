@@ -607,6 +607,8 @@ void  assembleToObject(){
             outputFile << i.value << " ";
         }
     } 
+    outputFile.close()
+
 }
 
 
