@@ -1,6 +1,6 @@
 # Custom Assembler 
 Assembler created for "Basic Software" class at University of Brasilia.
-There is also a simulator avaiable at [github](https://github.com/gabuvns/simulator-sb)
+There is also a runtime simulator avaiable at [github](https://github.com/gabuvns/simulator-sb) so you can execute the code generated
 
 ## Getting Started
 This assembler supports the instructions in the following table.
