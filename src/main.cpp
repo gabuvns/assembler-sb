@@ -1,3 +1,6 @@
+/*
+Author: Carlos Gabriel Vilas Novas Soares
+*/
 #include <iostream>
 #include <fstream>
 #include <set>
