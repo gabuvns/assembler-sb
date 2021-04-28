@@ -32,11 +32,11 @@ g++ -o assembler ./src/main.cpp ./src/assembler.cpp -std=gnu++1z
 
 
 ## Usage 
-This program takes the name of the file to be assembled as an argument and optionally the name of the outputfile. If no output file name is defined will use default: "mybinfile.obj"
+This program assembles the files which have been used as input. It is required at least one file.
 
 ```
-./assembler <inputFileName> <outputFileName>
-./assembler inputFile.asm outputFile.obj
+./assembler <inputFileName> [OPT]<inputFileName2> ... [OPT]<inputFileNameN>
+./assembler inputFile.asm inputFileName2 ... inputFileNameN
 ```
 ## Começando :brazil:
 Este montador suporta as instruções disponíveis na tabela disponível no início do README.
@@ -65,10 +65,11 @@ g++ -o assembler ./src/main.cpp ./src/assembler.cpp -std=gnu++1z
 ```
 
 ## Uso 
-O programa recebe dois argumentos: o nome do arquivo a ser montado, e o nome do arquivo de saida. Caso nenhum nome de arquivo seja fornecido, o nome padrão será usado: "mybinfile.obj"
+O programa realiza a montagem dos programas inseridos como input, sendo necessário pelo menos um arquivo.
+
 ```
-./assembler <inputFileName> <outputFileName>
-./assembler inputFile.asm outputFile.obj
+./assembler <inputFileName> [OPT]<inputFileName2> ... [OPT]<inputFileNameN>
+./assembler inputFile.asm inputFileName2 ... inputFileNameN
 ```
 
 ## Author
