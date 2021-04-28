@@ -6,6 +6,6 @@ using std::ifstream;
 using std::string;
 using std::vector;
 
-void analyzeCode(ifstream &inFile, string outputFileName);
+void analyzeCode(ifstream &inFile, string outputFileName, int argNum);
 
 #endif

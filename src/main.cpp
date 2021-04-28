@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
                 cout << "Error opening file." << endl;
                 cout <<"Tried to open: '" << fileName << "'." << endl;
             }      
-            analyzeCode(inFile, fileName);
+            analyzeCode(inFile, fileName, argc);
 
             inFile.close();     
         }

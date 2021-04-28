@@ -4,8 +4,9 @@ Data: 03/22/2021
 */
 #include <iostream>
 #include <fstream>
-#include <set>
+#include <bitset>
 #include <string>
+#include <sstream> 
 #include <vector>
 #include <algorithm>
 #include <map>
@@ -32,6 +33,7 @@ int programError = 0;
 vector<string> errorList;
 vector<vector<string>> currentProgram;
 int lineCounter = 0, acumulador = 0, programCounter = 0; 
+int checkBeginEnd = 0;
 
 
 // These trim functions and only them, are not mine and were originally avaiable at:
@@ -55,6 +57,16 @@ static inline void trim(std::string &s) {
 }
 ////////////////////////////////////////////////////////////////////////////////////
 
+int countWords(std::string x) {
+    int wordsTotal = 0;      
+    char prev = ' ';
+    for(unsigned int i = 0; i < x.size(); i++) {
+        if(x[i] != ' ' && prev == ' ') wordsTotal++;
+        prev = x[i];
+    }
+    return wordsTotal;
+}
+
 // Print stiff sections
 void printProgram(){
     for(auto &i : currentProgram){
@@ -70,6 +82,14 @@ void printProgram(){
 void printStringVector(vector<string> vetor){
     for(auto i : vetor) cout << i <<" ";
     cout << endl;
+}
+
+string  boolVectorToString(vector<bool> vetor){
+    string aux = "";
+    for(auto i : vetor){
+        aux+=1;
+    } 
+    return aux;
 }
 
 void printSymbolTable(){
@@ -562,34 +582,37 @@ int labelLinking(string paramName){
     return pc;
 }
 
-void  assembleToObject(){
+void  assembleToObject(string codeName){
+    std::stringstream objCodeStr;
     std::ofstream outputFile;
     outputFile.open(_outputFileName);
+    
+    
     // Iterates trough instruction list
     int pcDifference = codeTable.instructionTable.back().programCounter - codeTable.symbolTable.back().programCounter; 
     
     for(auto &i : codeTable.instructionTable){
         // cout << i.opcode << " ";
-        outputFile << i.opcode << " ";
+        objCodeStr << i.opcode << " ";
         // Gathers Symbol
         // Check if is Jump
         if(i.opcode >= 5 && i.opcode<=8){
             // cout << labelLinking(i.parameters.at(0)) << " ";
-            outputFile << labelLinking(i.parameters.at(0)) << " ";
+            objCodeStr << labelLinking(i.parameters.at(0)) << " ";
         }
         else{
             if(wasSectionDataReadFirst){
                 i.linkedParameters = parameterLinking(i.parameters);
                 for(auto &j : i.linkedParameters){
                     // cout << j.programCounter + pcDifference<<" ";
-                    outputFile << j.programCounter + pcDifference<<" ";
+                    objCodeStr << j.programCounter + pcDifference<<" ";
                 } 
             }
             else{
                 i.linkedParameters = parameterLinking(i.parameters);
                 for(auto &j : i.linkedParameters){
                     // cout << j.programCounter <<" ";
-                    outputFile << j.programCounter <<" ";
+                    objCodeStr << j.programCounter <<" ";
                 } 
 
             }
@@ -599,20 +622,32 @@ void  assembleToObject(){
     for(auto &i : codeTable.symbolTable){
         if(i.symbolType == typeSpace){
             // cout << 0 << " "; 
-            outputFile << 0 << " ";    
+            objCodeStr << 0 << " ";    
         
         }
         else{
             // cout << i.value << " ";
-            outputFile << i.value << " ";
+            objCodeStr << i.value << " ";
         }
     } 
+    
+    string auxStr = objCodeStr.str();
+    outputFile << "H: " << codeName <<endl;
+
+    int totalWords = countWords(auxStr);    
+    outputFile << "H: " << totalWords <<endl;
+    
+    vector<bool> relocationBits(totalWords);
+    string relocationBitsString = boolVectorToString(relocationBits);
+    outputFile << "H: " << relocationBitsString <<endl;
+    
+    outputFile << "T: " << objCodeStr.str() <<endl;   
     outputFile.close();
 
 }
 
 // Clears the memory for every program
-void clearMemory(){
+void resetMemory(){
     wasSectionDataReadFirst = 0;
     sectionState = sectionText;
     
@@ -632,15 +667,22 @@ void clearMemory(){
     acumulador = 0; 
     programCounter = 0; 
     LabelMap.clear();
+    checkBeginEnd = 0;
+    
 }
 
-void analyzeCode(ifstream &inFile, string outputFileName){
+void analyzeCode(ifstream &inFile, string outputFileName, int argNum){
+    string rawFileName = outputFileName.substr(0, outputFileName.find(".asm"));
     if(!outputFileName.empty()){
-        _outputFileName = outputFileName.substr(0, outputFileName.find(".asm"));
-        _outputFileName+=".obj";
+        _outputFileName = rawFileName + ".obj"; 
     }
+    if(argNum > 2){
+        checkBeginEnd=1;    
+        //check for erros if not found:        
+    }
+    
     firstPassage(inFile);
-    assembleToObject();
+    assembleToObject(rawFileName);
     if(!programError){
         cout << "\nWritten to file: "<< _outputFileName <<endl;
     }
@@ -648,5 +690,5 @@ void analyzeCode(ifstream &inFile, string outputFileName){
         cout << "Program ended with errors\nCreated obj file contains errors and should not be used\n";
     }
 
-    clearMemory();
+    resetMemory();
 }
