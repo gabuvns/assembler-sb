@@ -607,14 +607,37 @@ void  assembleToObject(){
             outputFile << i.value << " ";
         }
     } 
-    outputFile.close()
+    outputFile.close();
 
 }
 
+// Clears the memory for every program
+void clearMemory(){
+    wasSectionDataReadFirst = 0;
+    sectionState = sectionText;
+    
+    codeTable.instructionTable.clear();
+    codeTable.instructionTable.shrink_to_fit();
+    codeTable.symbolTable.clear();
+    codeTable.symbolTable.shrink_to_fit();
+
+    programError = 0;
+    
+    errorList.clear();
+    errorList.shrink_to_fit();
+    
+    currentProgram.clear();
+    currentProgram.shrink_to_fit();
+    lineCounter = 0;
+    acumulador = 0; 
+    programCounter = 0; 
+    LabelMap.clear();
+}
 
 void analyzeCode(ifstream &inFile, string outputFileName){
     if(!outputFileName.empty()){
-        _outputFileName = outputFileName;
+        _outputFileName = outputFileName.substr(0, outputFileName.find(".asm"));
+        _outputFileName+=".obj";
     }
     firstPassage(inFile);
     assembleToObject();
@@ -624,5 +647,6 @@ void analyzeCode(ifstream &inFile, string outputFileName){
     else{
         cout << "Program ended with errors\nCreated obj file contains errors and should not be used\n";
     }
-   
+
+    clearMemory();
 }
