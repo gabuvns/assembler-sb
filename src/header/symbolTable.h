@@ -73,7 +73,12 @@ struct Directive {
 
 const map<string, Directive> DirectivesTable {
     {"SPACE", Directive("SPACE", 1, 1)},  
-    {"CONST", Directive("CONST", 1, 1)}   
+    {"CONST", Directive("CONST", 1, 1)},
+    {"BEGIN", Directive("BEGIN", 0, 1)},
+    {"END", Directive("END", 0, 1)},  
+    {"PUBLIC", Directive("PUBLIC", 0, 1)},  
+    {"EXTERN", Directive("EXTERN", 0, 1)},  
+    
 };
 
 const map<string, Instruction> InstructionsMap{
@@ -93,12 +98,11 @@ const map<string, Instruction> InstructionsMap{
     {"OUTPUT", Instruction("OUTPUT"     , 13, 2, 1)},
     {"STOP", Instruction("STOP", 14, 1, 0)},
 };
-
 map<string, Label> LabelMap;
 
 struct CodeTable{
     vector<Instruction> instructionTable;
-    // vector<Directive> dataTable;
+    vector<Directive> dataTable;
     vector<Symbol> symbolTable;
 };
 
