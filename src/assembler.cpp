@@ -22,6 +22,7 @@ using std::map;
 
 
 enum SectionState {
+    sectionModule,
     sectionData,
     sectionText
 };
@@ -34,6 +35,7 @@ vector<string> errorList;
 vector<vector<string>> currentProgram;
 int lineCounter = 0, acumulador = 0, programCounter = 0; 
 int checkBeginEnd = 0;
+int foundEnd = 0;
 
 
 // These trim functions and only them, are not mine and were originally avaiable at:
@@ -200,6 +202,19 @@ void wrongSymbolDeclaration(vector<string> codeLine){
     programError = 1;
     cout << endl;
 }
+// If betype == 0 begin not found, if 1 end not found
+void errorBeginNotFound(vector<string> codeLine, int betype){
+    string auxStr = betype ? "END" : "BEGIN";
+    cout << "Error Module" <<endl;
+    printStringVector(codeLine);
+    cout << auxStr << " not found. Current Line:" << lineCounter <<endl <<endl;
+    programError=1;
+}
+void errorEndNotFound(){
+    cout << "Error Module" <<endl;
+    cout << "END not found. Current Line:" << lineCounter <<endl <<endl;
+    programError=1;
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int isInvalidChar(char character, int indexCounter) {
     // Checks if symbol starts with number
@@ -288,6 +303,7 @@ vector<string> scanner(string readLine){
         }
         // Check if char is invalid
         else if(i!='-' && i!=',' && isInvalidChar(i, indexCounter)){
+            
             cout << "            " << readLine << endl;
             cout <<"            " ; for(int i =0; i < indexCounter; i++) cout <<" "; cout<< "^" <<endl;
             programError = 1;
@@ -296,8 +312,15 @@ vector<string> scanner(string readLine){
         
         indexCounter++;
     }
-    if(lineCounter == 1 && codeLine.at(1) == "DATA"){
-        wasSectionDataReadFirst = 1;
+    if(sectionText == sectionModule){
+        if(lineCounter == 2 && codeLine.at(1) == "DATA"){
+            wasSectionDataReadFirst = 1;
+        }
+    }
+    else{
+        if(lineCounter == 2 && codeLine.at(1) == "DATA"){
+            wasSectionDataReadFirst = 1;
+        } 
     }
     return codeLine;
 }
@@ -444,15 +467,17 @@ void searchLabelMap(vector<string> codeLine){
 int classifyLine(vector<string> codeLine){
     // Assumes 0 for instruction, 1 for symbol
     int typeOfLine = codeLine.at(0).back() == ':' ? 1 : 0;
-    
-    if(typeOfLine == 1){
+    if(codeLine.size() == 1){
+        if(codeLine.at(0) == "END") foundEnd = 1;
+    }
+    else if(typeOfLine == 1){
         searchLabelMap(codeLine);
     }
     else if(typeOfLine == 0){
         searchInstructionMap(codeLine);
     }
     else if(searchDirectiveTable(codeLine)){
-
+        
     }
     else{
         // Error symbol not found
@@ -515,7 +540,19 @@ void parseDataSymbol(vector<string> codeLine){
     
 }
 void parser(vector<string> codeLine){
-    if(sectionState == sectionData){
+    if(sectionState == sectionModule){
+        if(codeLine.size() == 2){
+            if(codeLine.at(1) !="BEGIN"){
+                errorBeginNotFound(codeLine, 0);
+            }
+        }
+        else{
+            errorWrongNumberOfArguments(codeLine);
+            errorBeginNotFound(codeLine, 0);
+        }
+        
+    }
+    else if(sectionState == sectionData){
         if(!searchSymbolTable(codeLine) && codeLine.front() !="SECTION"){
             if(codeLine.size() >4){
                 errorWrongNumberOfArguments(codeLine);
@@ -537,21 +574,12 @@ int firstPassage(ifstream &inFile){
         try{    
             vector<string> tokenizedLine = scanner(readLine);
             if(!tokenizedLine.empty()) {
-                if(lineCounter==1 && checkBeginEnd==1){
-                    if(tokenizedLine.back() != "BEGIN") {
-                        throw 1;
-                    }
-                    else{
-                        // add to program
-                    }
-                }
-                else{
                     currentProgram.push_back(tokenizedLine);
                     whichCodeSection(tokenizedLine);
-                }
             }
 
             if(!tokenizedLine.empty()) parser(tokenizedLine);
+            
             if(programError){
                 // throw 0;
             }            
@@ -686,7 +714,6 @@ void resetMemory(){
     acumulador = 0; 
     programCounter = 0; 
     LabelMap.clear();
-    checkBeginEnd = 0;
     
 }
 
@@ -695,9 +722,13 @@ void analyzeCode(ifstream &inFile, string outputFileName, int argNum){
     if(!outputFileName.empty()){
         _outputFileName = rawFileName + ".obj"; 
     }
-    if(argNum > 2) checkBeginEnd=1;    
+    if(argNum > 2){
+        checkBeginEnd=1;
+        sectionState = sectionModule;
+    }    
     
     firstPassage(inFile);
+    if(foundEnd == 0 && checkBeginEnd == 1) errorEndNotFound();
     assembleToObject(rawFileName);
     if(!programError){
         cout << "\nWritten to file: "<< _outputFileName <<endl;
