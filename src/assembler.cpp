@@ -263,6 +263,13 @@ vector<string> scanner(string readLine){
             currentWord.clear(); 
             return codeLine;
         }
+        else if(i=='	') {
+            if(!currentWord.empty()){
+                codeLine.push_back(currentWord);
+            }
+            currentWord.clear(); 
+            return codeLine;
+        }
 
         else if(i==':'){
             if(!currentWord.empty()){
@@ -530,8 +537,18 @@ int firstPassage(ifstream &inFile){
         try{    
             vector<string> tokenizedLine = scanner(readLine);
             if(!tokenizedLine.empty()) {
-                currentProgram.push_back(tokenizedLine);
-                whichCodeSection(tokenizedLine);
+                if(lineCounter==1 && checkBeginEnd==1){
+                    if(tokenizedLine.back() != "BEGIN") {
+                        throw 1;
+                    }
+                    else{
+                        // add to program
+                    }
+                }
+                else{
+                    currentProgram.push_back(tokenizedLine);
+                    whichCodeSection(tokenizedLine);
+                }
             }
 
             if(!tokenizedLine.empty()) parser(tokenizedLine);
@@ -631,17 +648,19 @@ void  assembleToObject(string codeName){
         }
     } 
     
+    // Header prog. name
     string auxStr = objCodeStr.str();
     outputFile << "H: " << codeName <<endl;
-
+    //Header Code Size 
     int totalWords = countWords(auxStr);    
     outputFile << "H: " << totalWords <<endl;
-    
+    // Header relocation bits
     vector<bool> relocationBits(totalWords);
     string relocationBitsString = boolVectorToString(relocationBits);
     outputFile << "H: " << relocationBitsString <<endl;
-    
-    outputFile << "T: " << objCodeStr.str() <<endl;   
+    // Header code
+    outputFile << "T: " << objCodeStr.str() <<endl; 
+    // Header data  
     outputFile.close();
 
 }
@@ -676,10 +695,7 @@ void analyzeCode(ifstream &inFile, string outputFileName, int argNum){
     if(!outputFileName.empty()){
         _outputFileName = rawFileName + ".obj"; 
     }
-    if(argNum > 2){
-        checkBeginEnd=1;    
-        //check for erros if not found:        
-    }
+    if(argNum > 2) checkBeginEnd=1;    
     
     firstPassage(inFile);
     assembleToObject(rawFileName);
