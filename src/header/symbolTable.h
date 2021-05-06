@@ -24,6 +24,7 @@ struct Symbol{
     int line = 0;
     int programCounter;
     int value = 0;
+    vector<int> uses;
     Symbol(string name, SymbolType symbolType, int value, int line, int programCounter){
         this->line = line;
         this->programCounter = programCounter;
@@ -113,7 +114,7 @@ map<string, Label> LabelMap;
 // Definition table
 struct CodeTable{
     vector<Instruction> instructionTable;
-    vector<Directive> useTable;
+    vector<Symbol> useTable;
     vector<Directive> defTable;
     vector<Symbol> symbolTable;
 };

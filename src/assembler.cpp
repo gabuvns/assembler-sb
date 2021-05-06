@@ -109,10 +109,34 @@ void printSymbolTable(){
         cout << "ProgramCounter: " << i.programCounter <<endl;
         cout << "SymbolType: " << i.symbolType <<endl;
     }
-
     cout <<endl;
-
 }
+
+void printDefinitionTable(){
+    for(auto i : codeTable.symbolTable) {
+        if(i.symbolType==typePublic){
+            cout << "Definition table===============\n";
+            cout << "Name: " << i.name <<endl;
+            cout << "Line: " << i.value <<endl;            
+        }
+    }
+    cout <<endl;
+}
+
+void printUseTable(){
+    for(auto i : codeTable.symbolTable) {
+        if(i.symbolType==typeExtern){
+            cout << "Use table ===============\n";
+            cout << "Name: " << i.name <<endl;
+            cout << "Uses:" <<" ";
+            for(auto j : i.uses) cout << j << " ";
+            cout << endl;            
+        }
+    }
+    cout <<endl;
+}
+
+
 void printInstructionTable(){
     for(auto i : codeTable.instructionTable) {
         cout << "Instruction ===============\n";
@@ -400,7 +424,7 @@ vector<string> addParametersToInstruction(vector<string> codeLine, Instruction a
 // If found instruction return true;
 int searchInstructionMap(vector<string> codeLine){
     auto searchedInstruction = InstructionsMap.find(codeLine.front());
-
+    
     if(searchedInstruction !=  InstructionsMap.end()){   
         Instruction auxInstruction = searchedInstruction->second;
         auxInstruction.line = lineCounter;
@@ -408,7 +432,11 @@ int searchInstructionMap(vector<string> codeLine){
         auxInstruction.parameters = addParametersToInstruction(codeLine, auxInstruction);
         codeTable.instructionTable.push_back(auxInstruction);
         programCounter+=auxInstruction.sizeInWords;
-
+        for(auto &i : codeTable.symbolTable){
+            if(i.name == codeLine.at(1) && i.symbolType==typeExtern){
+                i.uses.push_back(lineCounter);
+            } 
+        }
         return 1;
     }
 
@@ -432,7 +460,6 @@ void searchLabelMap(vector<string> codeLine){
         Label auxLabel;
         if(codeLine.at(0).back() == ':') codeLine.at(0).pop_back();
         auxLabel.name = codeLine.at(0);
-
         auxLabel.line = lineCounter;
         // Search for instruction
         vector<string> auxVector = codeLine;
@@ -494,7 +521,7 @@ int searchSymbolTable(vector<string> codeLine ){
     if(codeLine.at(0).back() == ':')codeLine.at(0).pop_back();
     
     for(auto i : codeTable.symbolTable){
-        if(i.name == codeLine.at(0)){
+        if(i.name == codeLine.at(0) && i.symbolType!=typePublic && i.symbolType!=typeSpace){
             errorSymbolAlreadyDeclared(codeLine, i.line);
             found = true;
         } 
@@ -536,11 +563,11 @@ void parseDataSymbol(vector<string> codeLine){
         }
     }
     else if(codeLine.at(0) == "PUBLIC"){
-            codeTable.defTable.push_back(Directive(codeLine.at(1),typePublic,0,lineCounter, programCounter));
+            codeTable.symbolTable.push_back(Symbol(codeLine.at(1),typePublic,0,lineCounter, programCounter));
             programCounter++;
     }
     else if(codeLine.at(1) == "EXTERN"){
-            codeTable.useTable.push_back(Directive(codeLine.at(0),typeExtern,0,lineCounter, programCounter));
+            codeTable.symbolTable.push_back(Symbol(codeLine.at(0), typeExtern, 0, lineCounter, programCounter));
             programCounter++;
     }
     else{
@@ -616,6 +643,7 @@ vector<Symbol> parameterLinking(vector<string> parameters){
             }
         }
         if(!foundSymbol){
+            // search useTable
             errorSymbolNotDeclared(i);
         }
     }
@@ -741,6 +769,7 @@ void analyzeCode(ifstream &inFile, string outputFileName, int argNum){
     else{
         cout << "Program ended with errors\nCreated obj file contains errors and should not be used\n";
     }
-
+printDefinitionTable();
+printUseTable();
     resetMemory();
 }
