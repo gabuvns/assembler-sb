@@ -1,7 +1,10 @@
 /*
-Author: Carlos Gabriel Vilas Novas Soares
-Data: 03/22/2021
+Made by Carlos Gabriel Vilas Novas Soares
+Most recent code and hopefully bug free at:
+https://github.com/gabuvns/ia-32-assembly-calculator
+Find the at: github.com/gabuvns/
 */
+
 #include <iostream>
 #include <fstream>
 #include <bitset>
@@ -52,10 +55,13 @@ static inline void rtrim(std::string &s) {
         return !std::isspace(ch);
     }).base(), s.end());
 }
+
 // trim from both ends (in place)
 static inline void trim(std::string &s) {
+    s.erase(std::remove(s.begin(), s.end(), '\t'), s.end());
     ltrim(s);
     rtrim(s);
+    
 }
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -279,11 +285,6 @@ vector<string> scanner(string readLine){
             return codeLine;
         }
         else if(i=='	') {
-            if(!currentWord.empty()){
-                codeLine.push_back(currentWord);
-            }
-            currentWord.clear(); 
-            return codeLine;
         }
 
         else if(i==':'){
@@ -427,7 +428,7 @@ int searchDirectiveTable(vector<string> codeLine){
 void searchLabelMap(vector<string> codeLine){
     auto searchedLabel = LabelMap.find(codeLine.front());
     // Label not yet found
-    if(searchedLabel== LabelMap.end() && LabelMap.size() != 1){
+    if(searchedLabel == LabelMap.end()){
         Label auxLabel;
         if(codeLine.at(0).back() == ':') codeLine.at(0).pop_back();
         auxLabel.name = codeLine.at(0);
@@ -461,7 +462,7 @@ void searchLabelMap(vector<string> codeLine){
         errorLabelAlreadyDeclared(codeLine);
     }
     else if(LabelMap.size() == 1 && searchedLabel == LabelMap.end()){
-        errorLabelAlreadyDeclared(codeLine);
+        // errorLabelAlreadyDeclared(codeLine);
     }
 }
 int classifyLine(vector<string> codeLine){
@@ -534,6 +535,14 @@ void parseDataSymbol(vector<string> codeLine){
             errorWrongNumberOfArguments(codeLine);
         }
     }
+    else if(codeLine.at(0) == "PUBLIC"){
+            codeTable.defTable.push_back(Directive(codeLine.at(1),typePublic,0,lineCounter, programCounter));
+            programCounter++;
+    }
+    else if(codeLine.at(1) == "EXTERN"){
+            codeTable.useTable.push_back(Directive(codeLine.at(0),typeExtern,0,lineCounter, programCounter));
+            programCounter++;
+    }
     else{
         errorUnknownSymbolType(codeLine);
     }
@@ -558,7 +567,6 @@ void parser(vector<string> codeLine){
                 errorWrongNumberOfArguments(codeLine);
             }
             else parseDataSymbol(codeLine);
-            
         }   
     }
     else if (sectionState == sectionText){
@@ -574,8 +582,8 @@ int firstPassage(ifstream &inFile){
         try{    
             vector<string> tokenizedLine = scanner(readLine);
             if(!tokenizedLine.empty()) {
-                    currentProgram.push_back(tokenizedLine);
-                    whichCodeSection(tokenizedLine);
+                currentProgram.push_back(tokenizedLine);
+                whichCodeSection(tokenizedLine);
             }
 
             if(!tokenizedLine.empty()) parser(tokenizedLine);
@@ -631,11 +639,8 @@ void  assembleToObject(string codeName){
     std::stringstream objCodeStr;
     std::ofstream outputFile;
     outputFile.open(_outputFileName);
-    
-    
     // Iterates trough instruction list
     int pcDifference = codeTable.instructionTable.back().programCounter - codeTable.symbolTable.back().programCounter; 
-    
     for(auto &i : codeTable.instructionTable){
         // cout << i.opcode << " ";
         objCodeStr << i.opcode << " ";
@@ -643,7 +648,7 @@ void  assembleToObject(string codeName){
         // Check if is Jump
         if(i.opcode >= 5 && i.opcode<=8){
             // cout << labelLinking(i.parameters.at(0)) << " ";
-            objCodeStr << labelLinking(i.parameters.at(0)) << " ";
+            objCodeStr << labelLinking(i.parameters.at(0)) << " ";            
         }
         else{
             if(wasSectionDataReadFirst){

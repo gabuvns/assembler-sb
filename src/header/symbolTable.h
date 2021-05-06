@@ -10,9 +10,14 @@ using std::vector;
 using std::map;
 
 enum SymbolType {
+    typeBegin,
+    typeEnd,
+    typePublic,
+    typeExtern,
     typeConst,
     typeSpace
 };
+
 struct Symbol{
     string name;
     SymbolType symbolType;
@@ -60,26 +65,30 @@ struct Label{
 
 struct Directive {
     string simbolicOpcode;
+    SymbolType symbolType;
     int value;
     int line;
     int sizeInWords;
     int programCounter;
-    Directive(string simbolicOpcode, int value, int sizeInWords) {
+    Directive(string simbolicOpcode,SymbolType symbolType, int value, int lineCounter, int programCounter) {
         this->simbolicOpcode = simbolicOpcode;
+        this->symbolType = symbolType;
         this->value = value;
+        this->line = lineCounter;
+        this->programCounter = programCounter;
         this->sizeInWords = sizeInWords;
     }
 };
 
-const map<string, Directive> DirectivesTable {
-    {"SPACE", Directive("SPACE", 1, 1)},  
-    {"CONST", Directive("CONST", 1, 1)},
-    {"BEGIN", Directive("BEGIN", 0, 1)},
-    {"END", Directive("END", 0, 1)},  
-    {"PUBLIC", Directive("PUBLIC", 0, 1)},  
-    {"EXTERN", Directive("EXTERN", 0, 1)},  
+// const map<string, Directive> DirectivesTable {
+//     {"SPACE", Directive("SPACE",typeSpace, 1, 1)},  
+//     {"CONST", Directive("CONST",typeConst, 1, 1)},
+//     {"BEGIN", Directive("BEGIN",typeBegin, 0, 1)},
+//     {"END",   Directive("END",  typeEnd 0, 1)},  
+//     {"PUBLIC",Directive("PUBLIC",typePublic 0, 1)},  
+//     {"EXTERN",Directive("EXTERN",typeExtern 0, 1)},  
     
-};
+// };
 
 const map<string, Instruction> InstructionsMap{
     // {"ADD", Instruction(simboliocOpcode, opcode, sizeInWords, numberOfParameters)}     
@@ -99,10 +108,13 @@ const map<string, Instruction> InstructionsMap{
     {"STOP", Instruction("STOP", 14, 1, 0)},
 };
 map<string, Label> LabelMap;
+// Use table 
 
+// Definition table
 struct CodeTable{
     vector<Instruction> instructionTable;
-    vector<Directive> dataTable;
+    vector<Directive> useTable;
+    vector<Directive> defTable;
     vector<Symbol> symbolTable;
 };
 
