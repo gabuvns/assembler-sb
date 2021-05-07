@@ -70,7 +70,7 @@ int countWords(std::string x) {
     char prev = ' ';
     for(unsigned int i = 0; i < x.size(); i++) {
         if(x[i] != ' ' && prev == ' ') wordsTotal++;
-        prev = x[i];
+        prev = x[i]; 
     }
     return wordsTotal;
 }
@@ -82,7 +82,7 @@ void printProgram(){
             cout  <<"{" << j <<  "}";
         }
         cout << endl <<"========================" <<endl;
-    }
+    } 
     cout << "Total Lines:" << lineCounter <<endl;
 
 }
@@ -113,18 +113,19 @@ void printSymbolTable(){
 }
 
 void printDefinitionTable(){
-    for(auto i : codeTable.symbolTable) {
+    for(auto i : codeTable.defTable) {
         if(i.symbolType==typePublic){
             cout << "Definition table===============\n";
             cout << "Name: " << i.name <<endl;
-            cout << "Line: " << i.value <<endl;            
+            cout << "Line: " << i.line <<endl;            
+            cout << "Value" << i.value <<endl;
         }
     }
     cout <<endl;
 }
 
 void printUseTable(){
-    for(auto i : codeTable.symbolTable) {
+    for(auto i : codeTable.useTable) {
         if(i.symbolType==typeExtern){
             cout << "Use table ===============\n";
             cout << "Name: " << i.name <<endl;
@@ -432,7 +433,7 @@ int searchInstructionMap(vector<string> codeLine){
         auxInstruction.parameters = addParametersToInstruction(codeLine, auxInstruction);
         codeTable.instructionTable.push_back(auxInstruction);
         programCounter+=auxInstruction.sizeInWords;
-        for(auto &i : codeTable.symbolTable){
+        for(auto &i : codeTable.useTable){
             if(i.name == codeLine.at(1) && i.symbolType==typeExtern){
                 i.uses.push_back(lineCounter);
             } 
@@ -544,6 +545,11 @@ void parseDataSymbol(vector<string> codeLine){
 
     else if (codeLine.at(1) == "CONST"){
         if(codeLine.size() == 3){
+            for(auto &i : codeTable.defTable){
+                if(i.symbolType == typePublic && codeLine.at(0) == i.name ){
+                    i.value = lineCounter;
+                }
+            }
             codeTable.symbolTable.push_back(Symbol(codeLine.at(0),  typeConst, stoi(codeLine.at(2)),
             lineCounter, programCounter));
             programCounter++;
@@ -555,6 +561,13 @@ void parseDataSymbol(vector<string> codeLine){
 
     else if(codeLine.at(1) == "SPACE"){
         if(codeLine.size() ==2){
+            // first we have to check if it alredy was declared as a public constant, so that we can
+            // update our definition table
+            for(auto &i : codeTable.defTable){
+                if(i.symbolType == typePublic && codeLine.at(0) == i.name ){
+                    i.value = lineCounter;
+                }
+            }
             codeTable.symbolTable.push_back(Symbol(codeLine.at(0), typeSpace, 0, lineCounter, programCounter));
             programCounter++;
         }
@@ -563,11 +576,11 @@ void parseDataSymbol(vector<string> codeLine){
         }
     }
     else if(codeLine.at(0) == "PUBLIC"){
-            codeTable.symbolTable.push_back(Symbol(codeLine.at(1),typePublic,0,lineCounter, programCounter));
+            codeTable.defTable.push_back(Symbol(codeLine.at(1),typePublic,0,lineCounter, programCounter));
             programCounter++;
     }
     else if(codeLine.at(1) == "EXTERN"){
-            codeTable.symbolTable.push_back(Symbol(codeLine.at(0), typeExtern, 0, lineCounter, programCounter));
+            codeTable.useTable.push_back(Symbol(codeLine.at(0), typeExtern, 0, lineCounter, programCounter));
             programCounter++;
     }
     else{
@@ -580,6 +593,10 @@ void parser(vector<string> codeLine){
         if(codeLine.size() == 2){
             if(codeLine.at(1) !="BEGIN"){
                 errorBeginNotFound(codeLine, 0);
+            }
+            else{
+                // lineCounter--;
+                
             }
         }
         else{
@@ -642,16 +659,36 @@ vector<Symbol> parameterLinking(vector<string> parameters){
                 auxSymbol.push_back(j);
             }
         }
+        
         if(!foundSymbol){
+            
+            for(auto &j : codeTable.useTable){
+                if(i == j.name){
+                    foundSymbol = true;
+                    auxSymbol.push_back(j);
+                }
+            }
+            
+            if(!foundSymbol) errorSymbolNotDeclared(i);
             // search useTable
-            errorSymbolNotDeclared(i);
+            
         }
     }
     return auxSymbol;
 }
 
+int labelUsedExtern(string paramName){
+    for(auto i : codeTable.useTable){
+        if(i.name == paramName) return 1;
+        
+    }
+    return 0;
+}
 int labelLinking(string paramName){
     int pc = 0;
+    if(labelUsedExtern(paramName)){
+        return 0;
+    }
     if(wasSectionDataReadFirst){
         pc -= codeTable.symbolTable.size();
     }
@@ -703,7 +740,7 @@ void  assembleToObject(string codeName){
             objCodeStr << 0 << " ";    
         
         }
-        else{
+        else if(i.symbolType!=typePublic && i.symbolType!=typeExtern){
             // cout << i.value << " ";
             objCodeStr << i.value << " ";
         }
@@ -719,7 +756,28 @@ void  assembleToObject(string codeName){
     vector<bool> relocationBits(totalWords);
     string relocationBitsString = boolVectorToString(relocationBits);
     outputFile << "H: " << relocationBitsString <<endl;
-    // Header code
+    
+    // Add definition table to header, which is an indicator of which line our public variables are declared
+    for(auto i : codeTable.defTable){
+        if(i.symbolType == typePublic){
+            // value here is a pointer to the line in which it is declared
+            outputFile << "D: ";
+            outputFile << i.name << " " <<  i.line <<" " << endl;
+        }
+    }
+    
+    // We now must add our use table, which is an indicator of where extern variables are used 
+    for(auto i : codeTable.useTable){
+        if(i.symbolType == typeExtern){
+            // value here is a pointer to the line in which it is declared
+            for(auto j : i.uses){
+                outputFile << "U: ";
+                outputFile << i.name << " " <<  j <<" " <<endl;
+                
+            }
+        }
+    }
+    
     outputFile << "T: " << objCodeStr.str() <<endl; 
     // Header data  
     outputFile.close();
@@ -733,9 +791,16 @@ void resetMemory(){
     
     codeTable.instructionTable.clear();
     codeTable.instructionTable.shrink_to_fit();
+    
     codeTable.symbolTable.clear();
     codeTable.symbolTable.shrink_to_fit();
+    
+    codeTable.useTable.clear();
+    codeTable.useTable.shrink_to_fit();
 
+    codeTable.defTable.clear();  
+    codeTable.defTable.shrink_to_fit();
+    
     programError = 0;
     
     errorList.clear();
@@ -769,7 +834,7 @@ void analyzeCode(ifstream &inFile, string outputFileName, int argNum){
     else{
         cout << "Program ended with errors\nCreated obj file contains errors and should not be used\n";
     }
-printDefinitionTable();
-printUseTable();
+    // printUseTable();
+    // printDefinitionTable();
     resetMemory();
-}
+} 

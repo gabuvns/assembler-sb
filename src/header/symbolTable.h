@@ -115,7 +115,7 @@ map<string, Label> LabelMap;
 struct CodeTable{
     vector<Instruction> instructionTable;
     vector<Symbol> useTable;
-    vector<Directive> defTable;
+    vector<Symbol> defTable;
     vector<Symbol> symbolTable;
 };
 
