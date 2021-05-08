@@ -37,7 +37,8 @@ int programError = 0;
 vector<string> errorList;
 vector<vector<string>> currentProgram;
 int lineCounter = 0, acumulador = 0, programCounter = 0; 
-int checkBeginEnd = 0,  foundEnd = 0,  sectionDataSize = 0;
+int checkBeginEnd = 0,  foundEnd = 0,  sectionDataSize = 0, pubExCounter=0;
+int sectionTextSize = 0;
 
 
 // These trim functions and only them, are not mine and were originally avaiable at:
@@ -281,6 +282,7 @@ void whichCodeSection(vector<string> readLine){
         sectionState = readLine.back() == "DATA" ? sectionData : sectionText;
     }
         if(sectionState==sectionData) sectionDataSize++;
+        else if(sectionState==sectionText) sectionTextSize++;
 }
 
 // Scanns the code for lexical erros and tokenizes it
@@ -438,7 +440,7 @@ int searchInstructionMap(vector<string> codeLine){
         programCounter+=auxInstruction.sizeInWords;
         for(auto &i : codeTable.useTable){
             if(i.name == codeLine.at(1) && i.symbolType==typeExtern){
-                
+
                 i.uses.push_back(programCounter-sectionDataSize);
             } 
         }
@@ -458,14 +460,27 @@ int searchDirectiveTable(vector<string> codeLine){
     return 1;
 }
 // If does not find label adds to the table
-void searchLabelMap(vector<string> codeLine){
+void searchLabelMap(vector<string> codeLine, int isBegin){
     auto searchedLabel = LabelMap.find(codeLine.front());
     // Label not yet found
-    if(searchedLabel == LabelMap.end()){
+    if(isBegin){
         Label auxLabel;
         if(codeLine.at(0).back() == ':') codeLine.at(0).pop_back();
         auxLabel.name = codeLine.at(0);
         auxLabel.line = lineCounter;
+        auxLabel.programCounter = 0;
+        LabelMap.insert({codeLine.at(0), auxLabel});
+        
+    }
+    else if(searchedLabel == LabelMap.end()){
+        Label auxLabel;
+        if(codeLine.at(0).back() == ':') codeLine.at(0).pop_back();
+        auxLabel.name = codeLine.at(0);
+        auxLabel.line = lineCounter;
+        auxLabel.programCounter = programCounter - sectionDataSize + 1;
+        if(auxLabel.programCounter < 0) auxLabel.programCounter = 0;
+ 
+        
         // Search for instruction
         vector<string> auxVector = codeLine;
         auxVector.erase(auxVector.begin());
@@ -480,7 +495,6 @@ void searchLabelMap(vector<string> codeLine){
             programCounter+=auxInstruction.sizeInWords;
             codeTable.instructionTable.push_back(auxInstruction);
             auxLabel.instruction = auxInstruction;
-            
             LabelMap.insert({codeLine.at(0), auxLabel});
         }
         // Didn't find instruction
@@ -504,7 +518,7 @@ int classifyLine(vector<string> codeLine){
         if(codeLine.at(0) == "END") foundEnd = 1;
     }
     else if(typeOfLine == 1){
-        searchLabelMap(codeLine);
+        searchLabelMap(codeLine,0);
     }
     else if(typeOfLine == 0){
         searchInstructionMap(codeLine);
@@ -551,7 +565,7 @@ void parseDataSymbol(vector<string> codeLine){
         if(codeLine.size() == 3){
             for(auto &i : codeTable.defTable){
                 if(i.symbolType == typePublic && codeLine.at(0) == i.name ){
-                    i.value = lineCounter;
+                    i.value = stoi(codeLine.at(2));
                 }
             }
             codeTable.symbolTable.push_back(Symbol(codeLine.at(0),  typeConst, stoi(codeLine.at(2)),
@@ -567,9 +581,10 @@ void parseDataSymbol(vector<string> codeLine){
         if(codeLine.size() ==2){
             // first we have to check if it alredy was declared as a public constant, so that we can
             // update our definition table
+            // 10000 is an arbitrary value to differentiate space in obj
             for(auto &i : codeTable.defTable){
                 if(i.symbolType == typePublic && codeLine.at(0) == i.name ){
-                    i.value = lineCounter;
+                    i.value = programCounter-pubExCounter+1+ 100000;
                 }
             }
             codeTable.symbolTable.push_back(Symbol(codeLine.at(0), typeSpace, 0, lineCounter, programCounter));
@@ -582,10 +597,12 @@ void parseDataSymbol(vector<string> codeLine){
     else if(codeLine.at(0) == "PUBLIC"){
             codeTable.defTable.push_back(Symbol(codeLine.at(1),typePublic,0,lineCounter, programCounter));
             programCounter++;
+            pubExCounter++;
     }
     else if(codeLine.at(1) == "EXTERN"){
             codeTable.useTable.push_back(Symbol(codeLine.at(0), typeExtern, 0, lineCounter, programCounter));
             programCounter++;
+            pubExCounter++;
     }
     else{
         errorUnknownSymbolType(codeLine);
@@ -599,7 +616,7 @@ void parser(vector<string> codeLine){
                 errorBeginNotFound(codeLine, 0);
             }
             else{
-                // lineCounter--;
+                searchLabelMap(codeLine, 1);
                 
             }
         }
@@ -739,7 +756,7 @@ void  assembleToObject(string codeName){
                 i.linkedParameters = parameterLinking(i.parameters);
                 for(auto &j : i.linkedParameters){
                     // cout << j.programCounter + pcDifference<<" ";
-                    objCodeStr << j.programCounter + pcDifference<<" ";
+                    objCodeStr <<j.programCounter +sectionTextSize <<" ";
                 } 
             }
             else{
@@ -780,9 +797,19 @@ void  assembleToObject(string codeName){
     // Add definition table to header, which is an indicator of which line our public variables are declared
     for(auto i : codeTable.defTable){
         if(i.symbolType == typePublic){
+            int printedAlredy =0;
             // value here is a pointer to the line in which it is declared
             outputFile << "D: ";
-            outputFile << i.name << " " <<  i.line <<" " << endl;
+            for (auto const& [key, val] : LabelMap){
+                if(val.name == i.name) {
+                    outputFile << i.name << " " << val.programCounter << "+" << endl;
+                    printedAlredy=1;
+                    break;                
+                }
+            }
+            if(!printedAlredy){
+                outputFile << i.name << " " <<  i.value <<" " << endl;
+            }
         }
     }
     
@@ -829,9 +856,11 @@ void resetMemory(){
     currentProgram.clear();
     currentProgram.shrink_to_fit();
     sectionDataSize = 0;
+    sectionTextSize = 0;
     lineCounter = 0;
     acumulador = 0; 
     programCounter = 0; 
+    
     LabelMap.clear();
     
 }

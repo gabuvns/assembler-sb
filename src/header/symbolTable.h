@@ -59,6 +59,7 @@ struct Instruction{
 struct Label{
     string name;
     int line;
+    int programCounter;
     Instruction instruction;
     Label(){}
 
