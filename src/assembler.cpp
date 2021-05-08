@@ -95,7 +95,6 @@ void printStringVector(vector<string> vetor){
 string  boolVectorToString(vector<int> vetor){
     string aux = "";
     for(auto i : vetor){
-        cout << std::to_string(i) << endl;
         aux+=std::to_string(i);
     } 
     return aux;
@@ -851,7 +850,7 @@ void analyzeCode(ifstream &inFile, string outputFileName, int argNum){
     else{
         cout << "Program ended with errors\nCreated obj file contains errors and should not be used\n";
     }
-    printUseTable();
-    printDefinitionTable();
+    // printUseTable();
+    // printDefinitionTable();
     resetMemory();
 } 
