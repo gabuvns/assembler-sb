@@ -1,6 +1,10 @@
 /*
-Author: Carlos Gabriel Vilas Novas Soares
+Made by Carlos Gabriel Vilas Novas Soares
+Most recent code and hopefully bug free at:
+https://github.com/gabuvns/assembler-sb
+Find the at: github.com/gabuvns/
 */
+
 #include <iostream>
 #include <fstream>
 #include <set>
