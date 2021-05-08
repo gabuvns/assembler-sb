@@ -92,10 +92,11 @@ void printStringVector(vector<string> vetor){
     cout << endl;
 }
 
-string  boolVectorToString(vector<bool> vetor){
+string  boolVectorToString(vector<int> vetor){
     string aux = "";
     for(auto i : vetor){
-        aux+=1;
+        cout << std::to_string(i) << endl;
+        aux+=std::to_string(i);
     } 
     return aux;
 }
@@ -118,7 +119,7 @@ void printDefinitionTable(){
             cout << "Definition table===============\n";
             cout << "Name: " << i.name <<endl;
             cout << "Line: " << i.line <<endl;            
-            cout << "Value" << i.value <<endl;
+            cout << "Value: " << i.value <<endl;
         }
     }
     cout <<endl;
@@ -699,6 +700,21 @@ int labelLinking(string paramName){
     }
     return pc;
 }
+vector<int> composeRelocationBits(int totalWords) {
+    vector<int> auxBool;
+    for(int i = 1; i <= totalWords;i++){
+        for(auto &j : codeTable.useTable){
+            for(auto &k : j.uses){
+                if(k==i){
+                    auxBool.push_back(1);
+                    i++;
+                }
+            }
+        }
+        auxBool.push_back(0);
+    }
+    return auxBool;
+}
 
 void  assembleToObject(string codeName){
     std::stringstream objCodeStr;
@@ -753,9 +769,10 @@ void  assembleToObject(string codeName){
     int totalWords = countWords(auxStr);    
     outputFile << "H: " << totalWords <<endl;
     // Header relocation bits
-    vector<bool> relocationBits(totalWords);
+    vector<int> relocationBits= composeRelocationBits(totalWords);
     string relocationBitsString = boolVectorToString(relocationBits);
-    outputFile << "H: " << relocationBitsString <<endl;
+    outputFile << "R: " << relocationBitsString <<endl;
+    
     
     // Add definition table to header, which is an indicator of which line our public variables are declared
     for(auto i : codeTable.defTable){
@@ -834,7 +851,7 @@ void analyzeCode(ifstream &inFile, string outputFileName, int argNum){
     else{
         cout << "Program ended with errors\nCreated obj file contains errors and should not be used\n";
     }
-    // printUseTable();
-    // printDefinitionTable();
+    printUseTable();
+    printDefinitionTable();
     resetMemory();
 } 
