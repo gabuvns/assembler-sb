@@ -37,8 +37,7 @@ int programError = 0;
 vector<string> errorList;
 vector<vector<string>> currentProgram;
 int lineCounter = 0, acumulador = 0, programCounter = 0; 
-int checkBeginEnd = 0;
-int foundEnd = 0;
+int checkBeginEnd = 0,  foundEnd = 0,  sectionDataSize = 0;
 
 
 // These trim functions and only them, are not mine and were originally avaiable at:
@@ -119,6 +118,7 @@ void printDefinitionTable(){
             cout << "Name: " << i.name <<endl;
             cout << "Line: " << i.line <<endl;            
             cout << "Value: " << i.value <<endl;
+            cout << "ProgramCounter: " << i.programCounter << endl;
         }
     }
     cout <<endl;
@@ -129,6 +129,8 @@ void printUseTable(){
         if(i.symbolType==typeExtern){
             cout << "Use table ===============\n";
             cout << "Name: " << i.name <<endl;
+            cout << "ProgramCounter: " << i.programCounter << endl;
+            cout << "Line: " << i.line <<endl;            
             cout << "Uses:" <<" ";
             for(auto j : i.uses) cout << j << " ";
             cout << endl;            
@@ -278,6 +280,7 @@ void whichCodeSection(vector<string> readLine){
     if(readLine.front() == "SECTION"){
         sectionState = readLine.back() == "DATA" ? sectionData : sectionText;
     }
+        if(sectionState==sectionData) sectionDataSize++;
 }
 
 // Scanns the code for lexical erros and tokenizes it
@@ -435,7 +438,8 @@ int searchInstructionMap(vector<string> codeLine){
         programCounter+=auxInstruction.sizeInWords;
         for(auto &i : codeTable.useTable){
             if(i.name == codeLine.at(1) && i.symbolType==typeExtern){
-                i.uses.push_back(lineCounter);
+                
+                i.uses.push_back(programCounter-sectionDataSize);
             } 
         }
         return 1;
@@ -701,7 +705,7 @@ int labelLinking(string paramName){
 }
 vector<int> composeRelocationBits(int totalWords) {
     vector<int> auxBool;
-    for(int i = 1; i <= totalWords;i++){
+    for(int i = 0; i < totalWords;i++){
         for(auto &j : codeTable.useTable){
             for(auto &k : j.uses){
                 if(k==i){
@@ -788,7 +792,7 @@ void  assembleToObject(string codeName){
             // value here is a pointer to the line in which it is declared
             for(auto j : i.uses){
                 outputFile << "U: ";
-                outputFile << i.name << " " <<  j <<" " <<endl;
+                outputFile << i.name << " " <<  j <<"+ " <<endl;
                 
             }
         }
@@ -824,6 +828,7 @@ void resetMemory(){
     
     currentProgram.clear();
     currentProgram.shrink_to_fit();
+    sectionDataSize = 0;
     lineCounter = 0;
     acumulador = 0; 
     programCounter = 0; 
