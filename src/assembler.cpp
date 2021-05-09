@@ -413,6 +413,7 @@ vector<string> addParametersToInstruction(vector<string> codeLine, Instruction a
         }
     }
     else if(auxInstruction.simbolicOpcode =="STOP"){
+        
         // handleStop
     }
     else if(auxInstruction.numberOfParameters == (codeLine.size() - 1)){
@@ -439,10 +440,12 @@ int searchInstructionMap(vector<string> codeLine){
         codeTable.instructionTable.push_back(auxInstruction);
         programCounter+=auxInstruction.sizeInWords;
         for(auto &i : codeTable.useTable){
-            if(i.name == codeLine.at(1) && i.symbolType==typeExtern){
-
-                i.uses.push_back(programCounter-sectionDataSize);
-            } 
+            if(codeLine.size() > 1){
+                if(i.name == codeLine.at(1) && i.symbolType==typeExtern){
+                        
+                    i.uses.push_back(programCounter-sectionDataSize);
+                } 
+            }
         }
         return 1;
     }
@@ -480,14 +483,13 @@ void searchLabelMap(vector<string> codeLine, int isBegin){
         auxLabel.programCounter = programCounter - sectionDataSize + 1;
         if(auxLabel.programCounter < 0) auxLabel.programCounter = 0;
  
-        
         // Search for instruction
         vector<string> auxVector = codeLine;
         auxVector.erase(auxVector.begin());
         // printStringVector(codeLine);
         auto searchedInstruction = InstructionsMap.find(auxVector.front());
         // If found instruction
-        if(searchedInstruction !=  InstructionsMap.end()){   
+        if(searchedInstruction !=  InstructionsMap.end() || codeLine.at(0) == "STOP"){   
             Instruction auxInstruction = searchedInstruction->second;
             auxInstruction.line = lineCounter;
             auxInstruction.programCounter = programCounter;
@@ -512,10 +514,12 @@ void searchLabelMap(vector<string> codeLine, int isBegin){
     }
 }
 int classifyLine(vector<string> codeLine){
+    
     // Assumes 0 for instruction, 1 for symbol
     int typeOfLine = codeLine.at(0).back() == ':' ? 1 : 0;
     if(codeLine.size() == 1){
         if(codeLine.at(0) == "END") foundEnd = 1;
+        if(codeLine.at(0) == "STOP") searchInstructionMap(codeLine);
     }
     else if(typeOfLine == 1){
         searchLabelMap(codeLine,0);
@@ -886,5 +890,6 @@ void analyzeCode(ifstream &inFile, string outputFileName, int argNum){
     }
     // printUseTable();
     // printDefinitionTable();
+    // printInstructionTable();
     resetMemory();
 } 
