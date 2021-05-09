@@ -39,6 +39,8 @@ vector<vector<string>> currentProgram;
 int lineCounter = 0, acumulador = 0, programCounter = 0; 
 int checkBeginEnd = 0,  foundEnd = 0,  sectionDataSize = 0, pubExCounter=0;
 int sectionTextSize = 0;
+int textSizeDifference = 0;
+
 
 
 // These trim functions and only them, are not mine and were originally avaiable at:
@@ -566,6 +568,7 @@ void parseDataSymbol(vector<string> codeLine){
     }
 
     else if (codeLine.at(1) == "CONST"){
+        textSizeDifference++;
         if(codeLine.size() == 3){
             for(auto &i : codeTable.defTable){
                 if(i.symbolType == typePublic && codeLine.at(0) == i.name ){
@@ -582,13 +585,14 @@ void parseDataSymbol(vector<string> codeLine){
     }
 
     else if(codeLine.at(1) == "SPACE"){
+        textSizeDifference++;
         if(codeLine.size() ==2){
             // first we have to check if it alredy was declared as a public constant, so that we can
             // update our definition table
             // 10000 is an arbitrary value to differentiate space in obj
             for(auto &i : codeTable.defTable){
                 if(i.symbolType == typePublic && codeLine.at(0) == i.name ){
-                    i.value = programCounter-pubExCounter+1+ 100000;
+                    i.value = programCounter-pubExCounter+ 100000;
                 }
             }
             codeTable.symbolTable.push_back(Symbol(codeLine.at(0), typeSpace, 0, lineCounter, programCounter));
@@ -791,7 +795,8 @@ void  assembleToObject(string codeName){
     outputFile << "H: " << codeName <<endl;
     //Header Code Size 
     int totalWords = countWords(auxStr);    
-    outputFile << "H: " << totalWords <<endl;
+    
+    outputFile << "H: " << totalWords << " " << totalWords - textSizeDifference <<endl;
     // Header relocation bits
     vector<int> relocationBits= composeRelocationBits(totalWords);
     string relocationBitsString = boolVectorToString(relocationBits);
@@ -863,6 +868,7 @@ void resetMemory(){
     sectionTextSize = 0;
     lineCounter = 0;
     acumulador = 0; 
+    textSizeDifference = 0;
     programCounter = 0; 
     
     LabelMap.clear();

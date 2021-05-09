@@ -1,0 +1,8 @@
+H: codeExampleNew/fat_mod_B
+H: 11 10
+R: 00010100010
+D: MOD_B 0+
+U: FAT 9+ 
+U: N 3+ 
+U: N 5+ 
+T: 11 10 3 8 11 8 10 10 5 0 0 
