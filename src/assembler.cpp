@@ -572,7 +572,7 @@ void parseDataSymbol(vector<string> codeLine){
         if(codeLine.size() == 3){
             for(auto &i : codeTable.defTable){
                 if(i.symbolType == typePublic && codeLine.at(0) == i.name ){
-                    i.value = stoi(codeLine.at(2));
+                    i.value = programCounter + 1;
                 }
             }
             codeTable.symbolTable.push_back(Symbol(codeLine.at(0),  typeConst, stoi(codeLine.at(2)),
@@ -590,11 +590,6 @@ void parseDataSymbol(vector<string> codeLine){
             // first we have to check if it alredy was declared as a public constant, so that we can
             // update our definition table
             // 10000 is an arbitrary value to differentiate space in obj
-            for(auto &i : codeTable.defTable){
-                if(i.symbolType == typePublic && codeLine.at(0) == i.name ){
-                    i.value = programCounter-pubExCounter+ 100000;
-                }
-            }
             codeTable.symbolTable.push_back(Symbol(codeLine.at(0), typeSpace, 0, lineCounter, programCounter));
             programCounter++;
         }
@@ -684,13 +679,21 @@ vector<Symbol> parameterLinking(vector<string> parameters){
         bool foundSymbol =false;
         for(auto &j : codeTable.symbolTable){
             if(i == j.name){
+                // link sutff in def table
+                for(auto &k : codeTable.defTable){
+                    cout << "Nome analizado: " << k.name;
+                    cout << "versus:         " << i << endl;
+                    cout << "tipo:           "<< k.symbolType <<endl;
+                    if(k.name == i  && (k.symbolType==typeConst || k.symbolType==typePublic)){
+                        k.value = j.programCounter + sectionTextSize;
+                    }
+                }
                 foundSymbol = true;
                 auxSymbol.push_back(j);
             }
         }
         
         if(!foundSymbol){
-            
             for(auto &j : codeTable.useTable){
                 if(i == j.name){
                     foundSymbol = true;
@@ -726,6 +729,7 @@ int labelLinking(string paramName){
             pc += valor.instruction.programCounter;
         }
     }
+    
     return pc;
 }
 vector<int> composeRelocationBits(int totalWords) {
@@ -811,7 +815,7 @@ void  assembleToObject(string codeName){
             outputFile << "D: ";
             for (auto const& [key, val] : LabelMap){
                 if(val.name == i.name) {
-                    outputFile << i.name << " " << val.programCounter << "+" << endl;
+                    outputFile << i.name << " " << val.programCounter  << endl;
                     printedAlredy=1;
                     break;                
                 }

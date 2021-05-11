@@ -72,6 +72,7 @@ struct Directive {
     int line;
     int sizeInWords;
     int programCounter;
+    int pcDirectiveRefersTo;
     Directive(string simbolicOpcode,SymbolType symbolType, int value, int lineCounter, int programCounter) {
         this->simbolicOpcode = simbolicOpcode;
         this->symbolType = symbolType;

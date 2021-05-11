@@ -1,0 +1,1 @@
+make && ./assembler codeExampleNew/fat_mod_A.asm codeExampleNew/fat_mod_B.asm
