@@ -681,11 +681,8 @@ vector<Symbol> parameterLinking(vector<string> parameters){
             if(i == j.name){
                 // link sutff in def table
                 for(auto &k : codeTable.defTable){
-                    cout << "Nome analizado: " << k.name;
-                    cout << "versus:         " << i << endl;
-                    cout << "tipo:           "<< k.symbolType <<endl;
                     if(k.name == i  && (k.symbolType==typeConst || k.symbolType==typePublic)){
-                        k.value = j.programCounter + sectionTextSize;
+                        k.value = j.programCounter + sectionTextSize + 1;
                     }
                 }
                 foundSymbol = true;
