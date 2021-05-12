@@ -37,7 +37,7 @@ int programError = 0;
 vector<string> errorList;
 vector<vector<string>> currentProgram;
 int lineCounter = 0, acumulador = 0, programCounter = 0; 
-int checkBeginEnd = 0,  foundEnd = 0,  sectionDataSize = 0, pubExCounter=0;
+int  foundEnd = 0,   foundBegin= 0, sectionDataSize = 0, pubExCounter=0;
 int sectionTextSize = 0;
 int textSizeDifference = 0;
 
@@ -246,9 +246,16 @@ void errorBeginNotFound(vector<string> codeLine, int betype){
     cout << auxStr << " not found. Current Line:" << lineCounter <<endl <<endl;
     programError=1;
 }
-void errorEndNotFound(){
-    cout << "Error Module" <<endl;
-    cout << "END not found. Current Line:" << lineCounter <<endl <<endl;
+void errorEndNotFound(int foundbegin){
+        cout << "Error Module" <<endl;
+    if(foundBegin){
+        cout << "END not found. Current Line:" << lineCounter <<endl <<endl;    
+    }
+    else{
+        cout << "BEGIN not found. Current Line:" << lineCounter <<endl <<endl;    
+
+        
+    }
     programError=1;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -619,6 +626,7 @@ void parser(vector<string> codeLine){
                 errorBeginNotFound(codeLine, 0);
             }
             else{
+                foundBegin = 1;
                 searchLabelMap(codeLine, 1);
                 
             }
@@ -825,7 +833,7 @@ void  assembleToObject(string codeName){
                 }
             }
             if(!printedAlredy){
-                outputFile << i.name << " " <<  i.value <<" " << endl;
+                outputFile << i.name << " " <<  i.value-1 <<" " << endl;
             }
         }
     }
@@ -888,13 +896,10 @@ void analyzeCode(ifstream &inFile, string outputFileName, int argNum){
     if(!outputFileName.empty()){
         _outputFileName = rawFileName + ".obj"; 
     }
-    if(argNum > 2){
-        checkBeginEnd=1;
-        sectionState = sectionModule;
-    }    
+    sectionState = sectionModule;   
     
     firstPassage(inFile);
-    if(foundEnd == 0 && checkBeginEnd == 1) errorEndNotFound();
+    if(foundBegin == 0 || foundEnd == 0 ) errorEndNotFound(foundBegin);
     assembleToObject(rawFileName);
     if(!programError){
         cout << "\nWritten to file: "<< _outputFileName <<endl;
