@@ -723,7 +723,8 @@ int labelLinking(string paramName){
     }
     for(auto const&[nome, valor] : LabelMap){
         if(paramName == nome){
-            pc += valor.instruction.programCounter;
+            pc = valor.instruction.programCounter - sectionDataSize;
+            pc++;
         }
     }
     
@@ -765,8 +766,13 @@ void  assembleToObject(string codeName){
             if(wasSectionDataReadFirst){
                 i.linkedParameters = parameterLinking(i.parameters);
                 for(auto &j : i.linkedParameters){
-                    // cout << j.programCounter + pcDifference<<" ";
-                    objCodeStr <<j.programCounter +sectionTextSize <<" ";
+                    if(j.symbolType == typeExtern){
+                        objCodeStr <<j.value<<" ";
+                    }
+                    else{
+                        objCodeStr <<j.programCounter +sectionTextSize <<" ";
+                        
+                    }
                 } 
             }
             else{
