@@ -10,12 +10,12 @@ using std::vector;
 using std::map;
 
 enum SymbolType {
-    typeBegin,
-    typeEnd,
-    typePublic,
-    typeExtern,
-    typeConst,
-    typeSpace
+    typeBegin,//    0
+    typeEnd,//      1
+    typePublic,//   2
+    typeExtern,//   3
+    typeConst,//    4
+    typeSpace//     5
 };
 
 struct Symbol{
@@ -24,6 +24,7 @@ struct Symbol{
     int line = 0;
     int programCounter;
     int value = 0;
+    int pubExBefore = 0;
     vector<int> uses;
     Symbol(string name, SymbolType symbolType, int value, int line, int programCounter){
         this->line = line;

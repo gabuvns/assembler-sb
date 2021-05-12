@@ -690,11 +690,17 @@ vector<Symbol> parameterLinking(vector<string> parameters){
             if(i == j.name){
                 for(auto &k : codeTable.defTable){
                     if(k.name == i  && (k.symbolType==typeConst || k.symbolType==typePublic)){
-                        k.value = j.programCounter + sectionTextSize + 1;
+                        k.value = j.programCounter-sectionTextSize;
                     }
                 }
-                
+            
                 foundSymbol = true;
+                if(j.programCounter + sectionTextSize +1<= sectionTextSize + sectionDataSize ){
+                    
+                    j.programCounter = j.programCounter + sectionTextSize + 1;
+                    
+                }
+                
                 auxSymbol.push_back(j);
             }
         }
@@ -775,20 +781,21 @@ void  assembleToObject(string codeName){
             if(wasSectionDataReadFirst){
                 i.linkedParameters = parameterLinking(i.parameters);
                 for(auto &j : i.linkedParameters){
+
                     if(j.symbolType == typeExtern){
                         objCodeStr <<j.value<<" ";
                     }
                     else{
                         if(j.symbolType==typeConst){
-                            objCodeStr <<j.programCounter +sectionTextSize +1<<" ";
+                            objCodeStr <<j.programCounter <<" ";
                             
                         }
                         else if(j.symbolType==typeSpace){
-                            objCodeStr <<j.programCounter +sectionTextSize +1<<" ";
+                            objCodeStr <<j.programCounter <<" ";
                             
                         }
                         else{
-                        objCodeStr <<j.programCounter +sectionTextSize<<endl;
+                        objCodeStr <<j.programCounter <<" "<<endl;
                         }
                         
                     }
