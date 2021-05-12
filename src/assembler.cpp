@@ -731,17 +731,18 @@ int labelLinking(string paramName){
 }
 vector<int> composeRelocationBits(int totalWords) {
     vector<int> auxBool;
-    for(int i = 0; i < totalWords;i++){
-        for(auto &j : codeTable.useTable){
-            for(auto &k : j.uses){
-                if(k==i){
-                    auxBool.push_back(1);
-                    i++;
-                }
-            }
+    
+    for(auto &j : codeTable.instructionTable){
+        auxBool.push_back(0);
+        for(int k = 0; k < j.numberOfParameters;k++){
+            auxBool.push_back(1);
         }
+    }
+    int relBitsTextSize = auxBool.size();
+    for(int i =0; i < totalWords - relBitsTextSize; i++){
         auxBool.push_back(0);
     }
+
     return auxBool;
 }
 
@@ -797,7 +798,7 @@ void  assembleToObject(string codeName){
     //Header Code Size 
     int totalWords = countWords(auxStr);    
     
-    outputFile << "H: " << totalWords << " " << totalWords - textSizeDifference <<endl;
+    outputFile << "H: " << totalWords <<endl;
     // Header relocation bits
     vector<int> relocationBits= composeRelocationBits(totalWords);
     string relocationBitsString = boolVectorToString(relocationBits);
