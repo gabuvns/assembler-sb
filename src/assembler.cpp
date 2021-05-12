@@ -686,20 +686,21 @@ vector<Symbol> parameterLinking(vector<string> parameters){
     for(auto &i : parameters){
         bool foundSymbol =false;
         for(auto &j : codeTable.symbolTable){
+            // link sutff in def table
             if(i == j.name){
-                // link sutff in def table
                 for(auto &k : codeTable.defTable){
                     if(k.name == i  && (k.symbolType==typeConst || k.symbolType==typePublic)){
                         k.value = j.programCounter + sectionTextSize + 1;
                     }
                 }
+                
                 foundSymbol = true;
                 auxSymbol.push_back(j);
             }
         }
         
         if(!foundSymbol){
-            for(auto &j : codeTable.useTable){
+            for(auto j : codeTable.useTable){
                 if(i == j.name){
                     foundSymbol = true;
                     auxSymbol.push_back(j);
@@ -709,7 +710,7 @@ vector<Symbol> parameterLinking(vector<string> parameters){
             if(!foundSymbol) errorSymbolNotDeclared(i);
             // search useTable
             
-        }
+        } 
     }
     return auxSymbol;
 }
@@ -778,13 +779,24 @@ void  assembleToObject(string codeName){
                         objCodeStr <<j.value<<" ";
                     }
                     else{
-                        objCodeStr <<j.programCounter +sectionTextSize <<" ";
+                        if(j.symbolType==typeConst){
+                            objCodeStr <<j.programCounter +sectionTextSize +1<<" ";
+                            
+                        }
+                        else if(j.symbolType==typeSpace){
+                            objCodeStr <<j.programCounter +sectionTextSize +1<<" ";
+                            
+                        }
+                        else{
+                        objCodeStr <<j.programCounter +sectionTextSize<<endl;
+                        }
                         
                     }
                 } 
             }
             else{
                 i.linkedParameters = parameterLinking(i.parameters);
+                
                 for(auto &j : i.linkedParameters){
                     // cout << j.programCounter <<" ";
                     objCodeStr << j.programCounter <<" ";
