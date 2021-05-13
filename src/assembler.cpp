@@ -852,7 +852,7 @@ void  assembleToObject(string codeName){
                 }
             }
             if(!printedAlredy){
-                outputFile << i.name << " " <<  i.value-1 <<" " << endl;
+                outputFile << i.name << " " <<  i.value+sectionTextSize <<" " << endl;
             }
         }
     }
