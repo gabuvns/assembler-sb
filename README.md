@@ -1,6 +1,9 @@
 # Custom Assembler 
 Assembler created for "Basic Software" class at University of Brasilia.
-There is also a runtime simulator avaiable at [github](https://github.com/gabuvns/simulator-sb) so you can execute the code generated
+There output of this assembler MUST go through the  [linker](https://github.com/gabuvns/linker-sb) so it can be executed by the [runtime simulator](https://github.com/gabuvns/simulator-sb).
+
+Assembler criado para a disciplina de "Software Básico" na Universidade de Brasília.
+O arquivo de saída deste código DEVE passar pelo [ligador](https://github.com/gabuvns/linker-sb) para que possa ser executado pelo [simulador](https://github.com/gabuvns/simulator-sb).
 
 ## Getting Started
 This assembler supports the instructions in the following table.
@@ -65,10 +68,10 @@ Obj file output:
 H: codeName
 H: 14 (codeSize)
 R: 00000000010000 (RelocationBits)
-D: FAT 4+ (Label position)
-D: ONE 1  (data + value in the case of CONST)
-D: N 100001 (If SPACE then 10000 + dataPosition in output text)
-U: MOD_B 9+ (Use of extern variables)
+D: FAT 4+ 
+D: ONE 1  
+D: N 1 
+U: MOD_B 9+ 
 T: 12 13 10 13 2 14 8 14 5 0 13 13 0 1 
 
 ```
@@ -131,12 +134,12 @@ END
 Obj file output:
 ```
 H: codeName
-H: 14 (tamanho do código)
-R: 00000000010000 (Bits de realocação)
-D: FAT 4+ (Posição da label)
-D: ONE 1  (dado + valor no caso de variaveis const)
-D: N 100001 (caso space then 10000 + dataPosition in output text)
-U: MOD_B 9+ (Use of extern variables)
+H: 14 
+R: 00000000010000 
+D: FAT 4+ 
+D: ONE 1 
+D: N 1
+U: MOD_B 9+ 
 T: 12 13 10 13 2 14 8 14 5 0 13 13 0 1 
 
 ```
